@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <netpacket/packet.h>
 #include <net/ethernet.h>
+#include <netinet/ip.h>
 #include <net/if.h>
 #include <string.h>
+#include <netinet/ether.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
 int main(int argc, char **argv)
 {
@@ -27,12 +28,21 @@ int main(int argc, char **argv)
     {
       printf("Got a packet\n");
       struct ether_header eh;
-      struct iphdr ih;
-      memcpy(&eh, buf, 14);
-      memcpy(&ih, buf, 20);
-      printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&eh.));
-          printf("type: %04x\n", s6_addr;
-      inet_ntoa((struct ether_addr *)&)
+      memcpy(& eh, buf, 14);
+      printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_dhost));
+      printf("Source: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_shost));
+      printf("Type: 0x%03x\n", ntohs(eh.ether_type));
+      
+      char n[] = "address";
+      if (ntohs(eh.ether_type) == 0x800)
+      {
+
+      	struct iphdr ih;
+      	memcpy(&ih, buf, 20);
+      	printf("IP destination: %s\n", ether_ntoa((struct ether_addr *)&ih.daddr));
+      	printf("IP source: %s\n", ether_ntoa((struct ether_addr *)&ih.saddr));
+      }
+      printf("-------------------\n");
     }
   }
 }
