@@ -1,12 +1,20 @@
 #include <sys/socket.h> 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netpacket/packet.h> 
 #include <net/ethernet.h>
 #include <stdio.h>
+#include <netinet/ip.h>
+#include <net/if.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <netinet/ether.h>
+#include <netinet/if_ether.h>
+
+
 
 int main(){
   int packet_socket;
@@ -42,6 +50,10 @@ int main(){
   while(1){
     char buf[1500];
     struct sockaddr_ll recvaddr;
+    struct sockaddr_ll listenaddr;
+    listenaddr.sll_family = AF_PACKET;
+    listenaddr.sll_protocol = htons(ETH_P_ALL);
+    listenaddr.sll_ifindex = if_nametoindex("hi eth0");
     unsigned int recvaddrlen=sizeof(struct sockaddr_ll);
     //we can use recv, since the addresses are in the packet, but we use recvfrom because it gives us an easy way to determine if this packet is incoming or outgoing (when using ETH_P_ALL, we see packets in both directions. Only outgoing can be seen when using a packet socket with some specific protocol)
     int n = recvfrom(packet_socket, buf, 1500,0,(struct sockaddr*)&recvaddr, &recvaddrlen);
@@ -50,6 +62,23 @@ int main(){
       continue;
     //start processing all others
     printf("Got a %d byte packet\n", n);
+    struct ether_header eh;
+      memcpy(& eh, buf, 14);
+      printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_dhost));
+      printf("Source: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_shost));
+      printf("Type: 0x%03x\n", ntohs(eh.ether_type));
+      
+      char n[] = "address";
+      if (ntohs(eh.ether_type) == 0x800)
+      {
+        printf("ICMP type");
+      	// struct iphdr ih;
+      	// memcpy(&ih, buf, 20);
+      	// printf("IP destination: %s\n", ether_ntoa((struct ether_addr *)&ih.daddr));
+      	// printf("IP source: %s\n", ether_ntoa((struct ether_addr *)&ih.saddr));
+      }
+      printf("ARP Type");
+      printf("-------------------\n");
     
     //what else to do is up to you, you can send packets with send, just like we used for TCP sockets (or you can use sendto, but it is not necessary, since the headers, including all addresses, need to be in the buffer you are sending)
     

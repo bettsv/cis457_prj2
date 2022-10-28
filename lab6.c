@@ -13,7 +13,7 @@
 int main(int argc, char **argv)
 {
   int sockfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-  struct sockaddr_ll addr;
+  struct sockaddr_ll recvaddr;
   struct sockaddr_ll listenaddr;
   listenaddr.sll_family = AF_PACKET;
   listenaddr.sll_protocol = htons(ETH_P_ALL);
@@ -21,10 +21,10 @@ int main(int argc, char **argv)
   bind(sockfd, (struct sockaddr *)&listenaddr, sizeof(listenaddr));
   while (1)
   {
-    int len = sizeof(addr);
-    char buf[5000];
-    int n = recvfrom(sockfd, buf, 5000, 0, (struct sockaddr *)&addr, &len);
-    if (addr.sll_pkttype != PACKET_OUTGOING)
+    unsigned int len = sizeof(struct sockaddr_ll);
+    char buf[1500];
+    int n = recvfrom(sockfd, buf, 1500, 0, (struct sockaddr *)&recvaddr, &len);
+    if (recvaddr.sll_pkttype != PACKET_OUTGOING)
     {
       printf("Got a packet\n");
       struct ether_header eh;
