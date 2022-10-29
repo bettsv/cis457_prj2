@@ -1,5 +1,5 @@
 Verdale Betts
-Sebastian Torrejon
+Sebastian Torrejon Alonzo
 CIS 457 Project 2: Virtual Router
 
 ----- run in terminal ------
