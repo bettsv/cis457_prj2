@@ -27,6 +27,10 @@ struct mac_ip{
 	char dst_mac[INET6_ADDRSTRLEN];
 	char dst_ip[INET6_ADDRSTRLEN];
 };
+struct my_icmp
+{
+  short int icmp_type;
+};
 
 int main()
 {
@@ -106,9 +110,10 @@ int main()
     memcpy(&e_h, buf, sizeof(e_h));
 
     char nn[] = "address";
+    // IF we have an incomingICMP echo request/reply
     if (ntohs(e_h.ether_type) == 0x800)
     {
-      //[Eth header][IP header][ICMP header]
+      /*[Eth header][IP header][ICMP header]*/
 
       // Eth header
       printf("ICMP type\n");
@@ -127,18 +132,26 @@ int main()
       if (icmp_h.icmp_type == 0)
       {
         printf("ICMP Reply\n");
+        //There is no need to respond to the reply
       }
       else if (icmp_h.icmp_type == 8)
       {
-        printf("ICMP Response\n");
+        printf("ICMP Request\n");
+        //Respond to the echo request by forwarding its mac address to who requested it.
+        //Swap the info in the ethernet header so we arrive at the requester
+        //IP protocol will still be type 1
+        //Switch the ICMP type from 8 to zero
+        //Place the targets mac address in the data header
+        //Send it via the socket to the requester that can then decode byte stream/datagram        
       }
 
       // Data header
       memcpy(&data_msg, &buf[sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h)], sizeof(data_msg));
       printf("Data message: %s\n", data_msg);
     }
-    // else if(ntohs(eh.ether_type) == 0x806)
-    else
+     
+    // If we have an incoming ARP request/response
+    else if(ntohs(e_h.ether_type) == 0x806)
     {
 
       //[Eth header][ARP header]
@@ -152,16 +165,17 @@ int main()
       arp_h.ar_pro = ntohs(e_h.ether_type);     /* Format of protocol address.  unsigned short int*/
       arp_h.ar_pln = '4';          /* Length of protocol address.  unsigned char*/
       
-      e_h.ether_shost
-      ip_h.daddr
-      e_h.ether_dhost
-      ip_h.daddr
+      // e_h.ether_shost;
+      // ip_h.daddr;
+      // e_h.ether_dhost;
+      // ip_h.daddr; 
+
       // Struct is used to hold source/destination ip/mac
       struct mac_ip arp;
-      memset(&arp.src_mac,ether_ntoa((struct ether_addr *)&e_h.ether_shost),sizeof(arp.src_mac));	// Setting the source mac
-      memset(&arp.src_ip,ether_ntoa((struct ether_addr *)&ip_h.daddr),sizeof(arp.src_ip));	// Setting the source ip 
-      memset(&arp.dst_mac,ether_ntoa((struct ether_addr *)&e_h.ether_dhost),sizeof(arp.dst_mac));	// Setting the destination mac
-      memset(&arp.dst_ip,ether_ntoa((struct ether_addr *)&ip_h.daddr),sizeof(arp.dst_ip));	// Setting the destination ip
+      memcpy(&arp.src_mac,&e_h.ether_shost,sizeof(arp.src_mac));	// Setting the source mac
+      memcpy(&arp.src_ip, &ip_h.daddr,sizeof(arp.src_ip));	// Setting the source ip 
+      memcpy(&arp.dst_mac,&e_h.ether_dhost,sizeof(arp.dst_mac));	// Setting the destination mac
+      memcpy(&arp.dst_ip,&ip_h.daddr,sizeof(arp.dst_ip));	// Setting the destination ip
 
       // arp_h.__ar_sha[ETH_ALEN] = e_h.ether_dhost; /* Sender hardware address.  unsigned char*/
       // arp_h.__ar_sip[4];        /* Sender IP address.  unsigned char*/
