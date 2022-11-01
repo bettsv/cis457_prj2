@@ -241,7 +241,6 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
     //  Copy the first 14 bytes from the buf and give it to the ethernet header
     memcpy(&e_h, buf, sizeof(e_h));
 
-    char nn[] = "address";
     // IF we have an incoming ICMP echo request/reply
     if (ntohs(e_h.ether_type) == 0x800)
     {
