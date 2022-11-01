@@ -61,22 +61,32 @@ int main(){
     if(recvaddr.sll_pkttype==PACKET_OUTGOING)
       continue;
     //start processing all others
-    printf("Got a %d byte packet\n", n);
-    struct ether_header eh;
+    printf("-------------------\n");
+    
+      
+    if (ntohs(eh.ether_type) == 0x800)
+    {
+      printf("ICMP type\n");
+      printf("Got a %d byte packet\n", n);
+      struct ether_header eh;
       memcpy(& eh, buf, 14);
       printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_dhost));
       printf("Source: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_shost));
       printf("Type: 0x%03x\n", ntohs(eh.ether_type));
-      
-      if (ntohs(eh.ether_type) == 0x800)
-      {
-        printf("ICMP type");
-      	// struct iphdr ih;
-      	// memcpy(&ih, buf, 20);
-      	// printf("IP destination: %s\n", ether_ntoa((struct ether_addr *)&ih.daddr));
-      	// printf("IP source: %s\n", ether_ntoa((struct ether_addr *)&ih.saddr));
-      }
-      printf("ARP Type");
+      struct iphdr ih;
+       memcpy(&ih, buf, 20);
+       printf("IP destination: %s\n", ether_ntoa((struct ether_addr *)&ih.daddr));
+       printf("IP source: %s\n", ether_ntoa((struct ether_addr *)&ih.saddr));
+    }
+    else if (ntohs(e_h.ether_type) == 0x806) {
+      printf("ARP Type\n");
+      printf("Got a %d byte packet\n", n);
+      struct ether_header eh;
+      memcpy(& eh, buf, 14);
+      printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_dhost));
+      printf("Source: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_shost));
+      printf("Type: 0x%03x\n", ntohs(eh.ether_type));
+    }
       printf("-------------------\n");
     
     //what else to do is up to you, you can send packets with send, just like we used for TCP sockets (or you can use sendto, but it is not necessary, since the headers, including all addresses, need to be in the buffer you are sending)
