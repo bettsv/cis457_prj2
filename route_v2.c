@@ -322,9 +322,13 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
         printf("ARP Request");
         // Create the ARP reply
         // Recycle the ethernet header by updating the source and destination header, the type can stay as 0x806
+        printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
+        printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
         e_h.ether_type = e_h.ether_type;
         memcpy(&e_h.ether_dhost,e_h.ether_shost,sizeof(e_h.ether_shost));
         memcpy(&e_h.ether_shost,chMAC,sizeof(e_h.ether_shost));
+        printf("new destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
+        printf("new source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
 
         /* Recycle the ARP header by updating the source and destination mac/ip, opcode needs = 2 for request, the type can stay as 0x806, 
           hardware type, hardware address
