@@ -39,6 +39,7 @@ struct ether_arp
   u_int8_t arp_tha[ETH_ALEN]; /* target hardware address */
   u_int8_t arp_tpa[4];        /* target protocol address */
 };
+
 struct icmp
 {
   u_int8_t type;      //#bit 0-7
@@ -98,6 +99,8 @@ struct ifreq
     char *ifr_data;
   };
 };
+  u_int8_t temp_src_ip[4]; 
+  u_int8_t temp_dst_ip[4];
 
 int main()
 {
@@ -336,13 +339,16 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
         full_arp_h.ea_hdr.arp_op = 2; 
 
         //Only for assigning new values before sending on the socket
-        full_arp_h.arp_sha[ETH_ALEN] = e_h.ether_shost; /* sender hardware address */
-        /* sender protocol address -- Take the ip of the source from the arp header and replace it with the destination ip -- use a temp variable to protect the data */
-        full_arp_h.arp_spa[4] = ip_h.daddr;             
-        full_arp_h.arp_tha[ETH_ALEN] = e_h.ether_dhost; /* target hardware address */
-        /* target protocol address -- Take the ip of the destination from the arp header and replace it with the source ip -- use a temp variable to protect the data */
-        full_arp_h.arp_tpa[4] = ip_h.daddr;             
-        
+        memcpy(&full_arp_h.arp_sha,&e_h.ether_shost,sizeof(full_arp_h.arp_sha)); /* sender hardware address */
+        memcpy(&full_arp_h.arp_tha,&e_h.ether_dhost,sizeof(full_arp_h.arp_tha)); /* target hardware address */
+
+        /* sender protocol address --  -- use a temp variable to protect the data */
+        memcpy(&temp_src_ip,&full_arp_h.arp_spa,sizeof(temp_src_ip)); //use a temp variable to protect the data
+        memcpy(&temp_dst_ip,&full_arp_h.arp_tpa,sizeof(temp_dst_ip)); //use a temp variable to protect the data
+
+        memcpy(&full_arp_h.arp_spa[4],&temp_dst_ip,sizeof(temp_dst_ip)); //Take the ip of the source from the arp header and replace it with the destination ip
+        memcpy(&full_arp_h.arp_tpa[4],&temp_src_ip,sizeof(temp_src_ip)); //Take the ip of the destination from the arp header and replace it with the source ip
+
       }
 
 
