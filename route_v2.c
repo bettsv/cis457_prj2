@@ -50,6 +50,7 @@ char data_msg[200];
 //   char opt[8];        // #bit 64-127
 // };
 
+<<<<<<< Updated upstream
 struct ipv4
 {
   u_int8_t versionHeader; // the first 4 bits are version, latter 4 are internet header
@@ -67,6 +68,25 @@ struct ipv4
   char options[8]; //
   char data[8];    // 64 bits
 };
+=======
+// struct ipv4
+// {
+//   u_int8_t versionHeader; // the first 4 bits are version, latter 4 are internet header
+//   // tos has first 3 bits as precedence, 1 as delay, 1 as throughput, 1 is reliability, 2 as reserved
+//   u_int8_t tos;     // type of service
+//   u_int16_t length; // total length
+//   u_int16_t id;
+//   // flags has first bit reserved, second bit don't fragment, 3rd bit more fragments
+//   u_int16_t flagFragment; // flags are first 3 bits, offset remaining 11
+//   u_int8_t ttl;           // time to live
+//   u_int8_t protocol;
+//   u_int16_t checksum;
+//   u_int32_t sourceAddr;
+//   u_int32_t destAddr;
+//   char options[8]; //
+//   char data[8];    // 64 bits
+// };
+>>>>>>> Stashed changes
 // struct ifmap
 // {
 //   unsigned long mem_start;
@@ -106,6 +126,9 @@ int main()
 {
   int iNetType;
   char chMAC[6];
+  //void* ifr;
+
+  //memset(&ifr,0,sizeof(struct ifreq));
 
   struct ifreq ifr;
   int sock;
@@ -242,58 +265,58 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
     memcpy(&e_h, buf, sizeof(e_h));
 
     // IF we have an incoming ICMP echo request/reply
-    if (ntohs(e_h.ether_type) == 0x800)
-    {
-      // u_int8_t type;      //#bit 0-7
-      // u_int8_t code;      //#bit 8-15
-      // u_int16_t checksum; //#bit 16-31
-      // u_int16_t id;       //#bit 32-47
-      // u_int16_t snum;     //#bit 48-63
-      // char opt[8];        // #bit 64-127
+    // if (ntohs(e_h.ether_type) == 0x800)
+    // {
+    //   // u_int8_t type;      //#bit 0-7
+    //   // u_int8_t code;      //#bit 8-15
+    //   // u_int16_t checksum; //#bit 16-31
+    //   // u_int16_t id;       //#bit 32-47
+    //   // u_int16_t snum;     //#bit 48-63
+    //   // char opt[8];        // #bit 64-127
 
-      // Parse a request from h1
-      printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
+    //   // Parse a request from h1
+    //   printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
 
       
-      // /*[Eth header][IP header][ICMP header]*/
+    //   // /*[Eth header][IP header][ICMP header]*/
 
-      // // Eth header (type,source mac, dest mac)
-      // printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
-      // printf("ICMP type\n");
-      // printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
-      // printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
-      // // printf("Got a %d byte packet\n", n);
+    //   // // Eth header (type,source mac, dest mac)
+    //   // printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
+    //   // printf("ICMP type\n");
+    //   // printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
+    //   // printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
+    //   // // printf("Got a %d byte packet\n", n);
 
-      // // IP header -> If the protocol header in the IP header = 1 this means we have an ICMP request/reply
-      // memcpy(&ip_h, &buf[sizeof(e_h)], sizeof(ip_h));
-      // printf("IP Protocol: %d\n", ip_h.protocol);
+    //   // // IP header -> If the protocol header in the IP header = 1 this means we have an ICMP request/reply
+    //   // memcpy(&ip_h, &buf[sizeof(e_h)], sizeof(ip_h));
+    //   // printf("IP Protocol: %d\n", ip_h.protocol);
 
-      // ICMP header (type, code, checksum, identifier, sequence number, optional data)
-      // http://www.tcpipguide.com/free/t_ICMPv4EchoRequestandEchoReplyMessages-2.htm
-      // Offset the buffer data by the size of the ethernet and ip headers
-      memcpy(&icmp_h, &buf[sizeof(e_h) + sizeof(ip_h)], sizeof(icmp_h));
-      if (icmp_h.type == 0)
-      {
-        printf("ICMP Reply\n");
-        // There is no need to respond to the reply
-      }
-      else if (icmp_h.type == 8)
-      {
-        printf("ICMP Request\n");
-        // Respond to the echo request by forwarding its mac address to who requested it.
-        // Swap the info in the ethernet header so we arrive at the requester
-        // IP protocol will still be type 1
-        // Switch the ICMP type from 8 to zero
-        // Place the targets mac address in the data header
-        // Send it via the socket to the requester that can then decode byte stream/datagram
-      }
-      // The ICMP header provides a place for optional data beginning at bit 65 and/or at 8 bytes into the ICMP frame
-      memcpy(&data_msg, &buf[sizeof(e_h) + sizeof(ip_h) + 8], sizeof(data_msg));
-      printf("Data message: %s\n", data_msg);
-    }
+    //   // ICMP header (type, code, checksum, identifier, sequence number, optional data)
+    //   // http://www.tcpipguide.com/free/t_ICMPv4EchoRequestandEchoReplyMessages-2.htm
+    //   // Offset the buffer data by the size of the ethernet and ip headers
+    //   memcpy(&icmp_h, &buf[sizeof(e_h) + sizeof(ip_h)], sizeof(icmp_h));
+    //   if (icmp_h.type == 0)
+    //   {
+    //     printf("ICMP Reply\n");
+    //     // There is no need to respond to the reply
+    //   }
+    //   else if (icmp_h.type == 8)
+    //   {
+    //     printf("ICMP Request\n");
+    //     // Respond to the echo request by forwarding its mac address to who requested it.
+    //     // Swap the info in the ethernet header so we arrive at the requester
+    //     // IP protocol will still be type 1
+    //     // Switch the ICMP type from 8 to zero
+    //     // Place the targets mac address in the data header
+    //     // Send it via the socket to the requester that can then decode byte stream/datagram
+    //   }
+    //   // The ICMP header provides a place for optional data beginning at bit 65 and/or at 8 bytes into the ICMP frame
+    //   memcpy(&data_msg, &buf[sizeof(e_h) + sizeof(ip_h) + 8], sizeof(data_msg));
+    //   printf("Data message: %s\n", data_msg);
+    // }
 
     // If we have an incoming ARP request/response
-    else if (ntohs(e_h.ether_type) == 0x806)
+    if (ntohs(e_h.ether_type) == 0x806)
     {
 
       //[Eth header][ARP header]
@@ -305,10 +328,10 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
       struct ether_arp full_arp_h;
       
       /* FIXED DATA */
-      full_arp_h.ea_hdr.arp_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
-      full_arp_h.ea_hdr.arp_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
-      full_arp_h.ea_hdr.arp_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
-      full_arp_h.ea_hdr.arp_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
+      full_arp_h.ea_hdr.ar_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
+      full_arp_h.ea_hdr.ar_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
+      full_arp_h.ea_hdr.ar_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
+      full_arp_h.ea_hdr.ar_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
       
       //full_arp_h.ea_hdr.arp_op == 1                      //#bit 56-71 /* Protocol Address Length */
       
@@ -316,7 +339,7 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
       memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h));
       
       
-      if(full_arp_h.ea_hdr.arp_op == 1)
+      if(full_arp_h.ea_hdr.ar_op == 1)
       {
         printf("ARP Request");
         // Create the ARP reply
@@ -333,13 +356,13 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
           hardware type, hardware address
         */
         /* FIXED DATA */
-        full_arp_h.ea_hdr.arp_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
-        full_arp_h.ea_hdr.arp_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
-        full_arp_h.ea_hdr.arp_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
-        full_arp_h.ea_hdr.arp_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
+        full_arp_h.ea_hdr.ar_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
+        full_arp_h.ea_hdr.ar_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
+        full_arp_h.ea_hdr.ar_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
+        full_arp_h.ea_hdr.ar_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
 
         // = //mac of r1 (we dont currently know)
-        full_arp_h.ea_hdr.arp_op = 2; 
+        full_arp_h.ea_hdr.ar_op = 2; 
 
         //Only for assigning new values before sending on the socket
         memcpy(&full_arp_h.arp_sha,&e_h.ether_shost,sizeof(full_arp_h.arp_sha)); /* sender hardware address */
@@ -349,8 +372,8 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
         memcpy(&temp_src_ip,&full_arp_h.arp_spa,sizeof(temp_src_ip)); //use a temp variable to protect the data
         memcpy(&temp_dst_ip,&full_arp_h.arp_tpa,sizeof(temp_dst_ip)); //use a temp variable to protect the data
 
-        memcpy(&full_arp_h.arp_spa[4],&temp_dst_ip,sizeof(temp_dst_ip)); //Take the ip of the source from the arp header and replace it with the destination ip
-        memcpy(&full_arp_h.arp_tpa[4],&temp_src_ip,sizeof(temp_src_ip)); //Take the ip of the destination from the arp header and replace it with the source ip
+        memcpy(&full_arp_h.arp_spa,&temp_dst_ip,sizeof(temp_dst_ip)); //Take the ip of the source from the arp header and replace it with the destination ip
+        memcpy(&full_arp_h.arp_tpa,&temp_src_ip,sizeof(temp_src_ip)); //Take the ip of the destination from the arp header and replace it with the source ip
 
       }
 
