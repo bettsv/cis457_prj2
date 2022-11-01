@@ -116,15 +116,12 @@ int main()
   {
     ifname = "wlan0"; /* Wifi */
   }
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
+  sock = socket(AF_INET, SOCK_DGRAM, 0);
   strcpy(ifr.ifr_name, ifname);
   ifr.ifr_addr.sa_family = AF_INET;
-  if (ioctl(sock, SIOCGIFHWADDR, &amp; ifr) & lt; 0)
-  {
-    return -1;
-  }
-  memcpy(chMAC, ifr.ifr_hwaddr.sa_data, 6)
-      close(sock);
+  ioctl(sock, SIOCGIFHWADDR, &ifr);
+  memcpy(chMAC, ifr.ifr_hwaddr.sa_data, 6);
+  close(sock);
 /*
 -------------------------------------------------------------------------------------------------
 struct ifreq ifr;
@@ -306,26 +303,48 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
       struct ether_arp full_arp_h;
       
       /* FIXED DATA */
-      full_arp_h.ea_hdr.arp_hrd = 1;                     //#byte 0-15   /* Format of hardware address.  unsigned short int*/
-      full_arp_h.ea_hdr.arp_pro = ntohs(e_h.ether_type); //#byte 16-31     /* Format of protocol address.  unsigned short int*/
-      full_arp_h.ea_hdr.arp_hln = 6;                     //#byte 5   /* Length of hardware address.  unsigned char*/
-      full_arp_h.ea_hdr.arp_pln = 4;                     //#byte 6   /* Length of protocol address.  unsigned char*/
-      //full_arp_h.ea_hdr.arp_op == 1                      //#byte 7-8 /* Protocol Address Length */
+      full_arp_h.ea_hdr.arp_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
+      full_arp_h.ea_hdr.arp_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
+      full_arp_h.ea_hdr.arp_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
+      full_arp_h.ea_hdr.arp_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
+      
+      //full_arp_h.ea_hdr.arp_op == 1                      //#bit 56-71 /* Protocol Address Length */
+      
+      //Offset buf by the size of the eth header and populate the arp struct based off the remaining data that buf has
       memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h));
+      
+      
       if(full_arp_h.ea_hdr.arp_op == 1)
       {
         printf("ARP Request");
-        // struct arphdr ea_hdr;       /* fixed-size header */
-        // u_int8_t arp_sha[ETH_ALEN]; /* sender hardware address */
-        // u_int8_t arp_spa[4];        /* sender protocol address */
-        // u_int8_t arp_tha[ETH_ALEN]; /* target hardware address */
-        // u_int8_t arp_tpa[4];        /* target protocol address */
-      }                 
+        // Create the ARP reply
+        // Recycle the ethernet header by updating the source and destination header, the type can stay as 0x806
+        e_h.ether_type = e_h.ether_type;
+        memcpy(&e_h.ether_dhost,e_h.ether_shost,sizeof(e_h.ether_shost));
+        memcpy(&e_h.ether_shost,chMAC,sizeof(e_h.ether_shost));
 
-      full_arp_h.arp_sha[ETH_ALEN] = e_h.ether_shost; /* sender hardware address */
-      full_arp_h.arp_spa[4] = ip_h.daddr;             /* sender protocol address */
-      full_arp_h.arp_tha[ETH_ALEN] = e_h.ether_dhost; /* target hardware address */
-      full_arp_h.arp_tpa[4] = ip_h.daddr;             /* target protocol address */
+        /* Recycle the ARP header by updating the source and destination mac/ip, opcode needs = 2 for request, the type can stay as 0x806, 
+          hardware type, hardware address
+        */
+        /* FIXED DATA */
+        full_arp_h.ea_hdr.arp_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
+        full_arp_h.ea_hdr.arp_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
+        full_arp_h.ea_hdr.arp_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
+        full_arp_h.ea_hdr.arp_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
+
+        // = //mac of r1 (we dont currently know)
+        full_arp_h.ea_hdr.arp_op = 2; 
+
+        //Only for assigning new values before sending on the socket
+        full_arp_h.arp_sha[ETH_ALEN] = e_h.ether_shost; /* sender hardware address */
+        /* sender protocol address -- Take the ip of the source from the arp header and replace it with the destination ip -- use a temp variable to protect the data */
+        full_arp_h.arp_spa[4] = ip_h.daddr;             
+        full_arp_h.arp_tha[ETH_ALEN] = e_h.ether_dhost; /* target hardware address */
+        /* target protocol address -- Take the ip of the destination from the arp header and replace it with the source ip -- use a temp variable to protect the data */
+        full_arp_h.arp_tpa[4] = ip_h.daddr;             
+        
+      }
+
 
       printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
       printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
