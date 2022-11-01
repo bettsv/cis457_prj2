@@ -68,7 +68,6 @@ int main(){
       printf("Source: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_shost));
       printf("Type: 0x%03x\n", ntohs(eh.ether_type));
       
-      char n[] = "address";
       if (ntohs(eh.ether_type) == 0x800)
       {
         printf("ICMP type");
