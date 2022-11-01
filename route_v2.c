@@ -50,25 +50,6 @@ char data_msg[200];
 //   char opt[8];        // #bit 64-127
 // };
 
-<<<<<<< Updated upstream
-struct ipv4
-{
-  u_int8_t versionHeader; // the first 4 bits are version, latter 4 are internet header
-  // tos has first 3 bits as precedence, 1 as delay, 1 as throughput, 1 is reliability, 2 as reserved
-  u_int8_t tos;     // type of service
-  u_int16_t length; // total length
-  u_int16_t id;
-  // flags has first bit reserved, second bit don't fragment, 3rd bit more fragments
-  u_int16_t flagFragment; // flags are first 3 bits, offset remaining 11
-  u_int8_t ttl;           // time to live
-  u_int8_t protocol;
-  u_int16_t checksum;
-  u_int32_t sourceAddr;
-  u_int32_t destAddr;
-  char options[8]; //
-  char data[8];    // 64 bits
-};
-=======
 // struct ipv4
 // {
 //   u_int8_t versionHeader; // the first 4 bits are version, latter 4 are internet header
@@ -86,7 +67,7 @@ struct ipv4
 //   char options[8]; //
 //   char data[8];    // 64 bits
 // };
->>>>>>> Stashed changes
+
 // struct ifmap
 // {
 //   unsigned long mem_start;
