@@ -245,18 +245,29 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
     // IF we have an incoming ICMP echo request/reply
     if (ntohs(e_h.ether_type) == 0x800)
     {
-      /*[Eth header][IP header][ICMP header]*/
+      // u_int8_t type;      //#bit 0-7
+      // u_int8_t code;      //#bit 8-15
+      // u_int16_t checksum; //#bit 16-31
+      // u_int16_t id;       //#bit 32-47
+      // u_int16_t snum;     //#bit 48-63
+      // char opt[8];        // #bit 64-127
 
-      // Eth header (type,source mac, dest mac)
+      // Parse a request from h1
       printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
-      printf("ICMP type\n");
-      printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
-      printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
-      // printf("Got a %d byte packet\n", n);
 
-      // IP header -> If the protocol header in the IP header = 1 this means we have an ICMP request/reply
-      memcpy(&ip_h, &buf[sizeof(e_h)], sizeof(ip_h));
-      printf("IP Protocol: %d\n", ip_h.protocol);
+      
+      // /*[Eth header][IP header][ICMP header]*/
+
+      // // Eth header (type,source mac, dest mac)
+      // printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
+      // printf("ICMP type\n");
+      // printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
+      // printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
+      // // printf("Got a %d byte packet\n", n);
+
+      // // IP header -> If the protocol header in the IP header = 1 this means we have an ICMP request/reply
+      // memcpy(&ip_h, &buf[sizeof(e_h)], sizeof(ip_h));
+      // printf("IP Protocol: %d\n", ip_h.protocol);
 
       // ICMP header (type, code, checksum, identifier, sequence number, optional data)
       // http://www.tcpipguide.com/free/t_ICMPv4EchoRequestandEchoReplyMessages-2.htm
@@ -293,12 +304,23 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
 
       // struct arphdr arp_h;
       struct ether_arp full_arp_h;
-
-      full_arp_h.ea_hdr.arp_hrd = 1;                     /* Format of hardware address.  unsigned short int*/
-      full_arp_h.ea_hdr.arp_hln = 6;                     /* Length of hardware address.  unsigned char*/
-      full_arp_h.ea_hdr.arp_pro = ntohs(e_h.ether_type); /* Format of protocol address.  unsigned short int*/
-      full_arp_h.ea_hdr.arp_pln = 4;                     /* Length of protocol address.  unsigned char*/
-      full_arp_h.ea_hdr.arp_op = 1;                      // Can be 1 for ARP request and 2 for ARP reply
+      
+      /* FIXED DATA */
+      full_arp_h.ea_hdr.arp_hrd = 1;                     //#byte 0-15   /* Format of hardware address.  unsigned short int*/
+      full_arp_h.ea_hdr.arp_pro = ntohs(e_h.ether_type); //#byte 16-31     /* Format of protocol address.  unsigned short int*/
+      full_arp_h.ea_hdr.arp_hln = 6;                     //#byte 5   /* Length of hardware address.  unsigned char*/
+      full_arp_h.ea_hdr.arp_pln = 4;                     //#byte 6   /* Length of protocol address.  unsigned char*/
+      //full_arp_h.ea_hdr.arp_op == 1                      //#byte 7-8 /* Protocol Address Length */
+      memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h));
+      if(full_arp_h.ea_hdr.arp_op == 1)
+      {
+        printf("ARP Request");
+        // struct arphdr ea_hdr;       /* fixed-size header */
+        // u_int8_t arp_sha[ETH_ALEN]; /* sender hardware address */
+        // u_int8_t arp_spa[4];        /* sender protocol address */
+        // u_int8_t arp_tha[ETH_ALEN]; /* target hardware address */
+        // u_int8_t arp_tpa[4];        /* target protocol address */
+      }                 
 
       full_arp_h.arp_sha[ETH_ALEN] = e_h.ether_shost; /* sender hardware address */
       full_arp_h.arp_spa[4] = ip_h.daddr;             /* sender protocol address */
