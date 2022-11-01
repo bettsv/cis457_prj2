@@ -17,99 +17,19 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <net/if_arp.h>
+#include <byteswap.h>
 
 #define MAC_ANY "00:00:00:00:00:00"
 #define MAC_BCAST "FF:FF:FF:FF:FF:FF"
 
 char data_msg[200];
-
-// struct arphdr
-// {
-//   unsigned short int arp_hrd; /* Format of hardware address.  */
-//   unsigned short int arp_pro; /* Format of protocol address.  */
-//   unsigned char arp_hln;      /* Length of hardware address.  */
-//   unsigned char arp_pln;      /* Length of protocol address.  */
-//   unsigned short int arp_op;  /* ARP opcode (command).  */
-// };
-// struct ether_arp
-// {
-//   struct arphdr ea_hdr;       /* fixed-size header */
-//   u_int8_t arp_sha[ETH_ALEN]; /* sender hardware address */
-//   u_int8_t arp_spa[4];        /* sender protocol address */
-//   u_int8_t arp_tha[ETH_ALEN]; /* target hardware address */
-//   u_int8_t arp_tpa[4];        /* target protocol address */
-// };
-
-// struct icmp
-// {
-//   u_int8_t type;      //#bit 0-7
-//   u_int8_t code;      //#bit 8-15
-//   u_int16_t checksum; //#bit 16-31
-//   u_int16_t id;       //#bit 32-47
-//   u_int16_t snum;     //#bit 48-63
-//   char opt[8];        // #bit 64-127
-// };
-
-// struct ipv4
-// {
-//   u_int8_t versionHeader; // the first 4 bits are version, latter 4 are internet header
-//   // tos has first 3 bits as precedence, 1 as delay, 1 as throughput, 1 is reliability, 2 as reserved
-//   u_int8_t tos;     // type of service
-//   u_int16_t length; // total length
-//   u_int16_t id;
-//   // flags has first bit reserved, second bit don't fragment, 3rd bit more fragments
-//   u_int16_t flagFragment; // flags are first 3 bits, offset remaining 11
-//   u_int8_t ttl;           // time to live
-//   u_int8_t protocol;
-//   u_int16_t checksum;
-//   u_int32_t sourceAddr;
-//   u_int32_t destAddr;
-//   char options[8]; //
-//   char data[8];    // 64 bits
-// };
-
-// struct ifmap
-// {
-//   unsigned long mem_start;
-//   unsigned long mem_end;
-//   unsigned short base_addr;
-//   unsigned char irq;
-//   unsigned char dma;
-//   unsigned char port;
-// };
-// struct ifreq
-// {
-// #define IFHWADDRLEN 6
-// #define IFNAMSIZ IF_NAMESIZE
-
-//   char ifr_name[IFNAMSIZ]; /* Interface name */
-//   union
-//   {
-//     struct sockaddr ifr_addr;
-//     struct sockaddr ifr_dstaddr;
-//     struct sockaddr ifr_broadaddr;
-//     struct sockaddr ifr_netmask;
-//     struct sockaddr ifr_hwaddr;
-//     short ifr_flags;
-//     int ifr_ifindex;
-//     int ifr_metric;
-//     int ifr_mtu;
-//     struct ifmap ifr_map;
-//     char ifr_slave[IFNAMSIZ];
-//     char ifr_newname[IFNAMSIZ];
-//     char *ifr_data;
-//   };
-// };
-  u_int8_t temp_src_ip[4]; 
-  u_int8_t temp_dst_ip[4];
+u_int8_t temp_src_ip[4]; 
+u_int8_t temp_dst_ip[4];
 
 int main()
 {
   int iNetType;
   char chMAC[6];
-  //void* ifr;
-
-  //memset(&ifr,0,sizeof(struct ifreq));
 
   struct ifreq ifr;
   int sock;
@@ -174,7 +94,7 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
   /* get list of interface addresses. This is a linked list. Next pointer is in ifa_next,
   interface name is in ifa_name, address is in ifa_addr. You will have multiple entries
   in the list with the same name, if the same interface has multiple addresses. This is
-  common since most interfaces will have a MAC, IPv4, and IPv6 address. Yovu can use the
+  common since most interfaces will have a MAC, IPv4, and IPv6 address. You can use the
   names to match up which IPv4 address goes with which MAC address.*/
   struct ifaddrs *ifaddr, *tmp;
   if (getifaddrs(&ifaddr) == -1)
@@ -305,45 +225,31 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
       // IP/MAC and target IP/MAC
       printf("ARP Type\n");
 
-      // struct arphdr arp_h;
       struct ether_arp full_arp_h;
       
-      /* FIXED DATA */
-      full_arp_h.ea_hdr.ar_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
-      full_arp_h.ea_hdr.ar_pro = 2048; //ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
-      full_arp_h.ea_hdr.ar_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
-      full_arp_h.ea_hdr.ar_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
-      
-      //full_arp_h.ea_hdr.arp_op == 1                      //#bit 56-71 /* Protocol Address Length */
-      
       //Offset buf by the size of the eth header and populate the arp struct based off the remaining data that buf has
-      memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h));
+      //printf("size of e_h:[%lu]\n",sizeof(e_h));  //14
+      //printf("size of full_arp_h:[%lu]\n",sizeof(full_arp_h));  //28
+      //printf("size of ip_h:[%lu]\n",sizeof(ip_h));    //20
+      //printf("size of icmp_h:[%lu]\n",sizeof(icmp_h));  //28
+      //e_h ranges from bytes 0-13
+      memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h)); // Store byte 14 - 41 in the full arp struct
       
-      
-      if(full_arp_h.ea_hdr.ar_op == 1)
+      if(__bswap_16 (full_arp_h.ea_hdr.ar_op) == 1)
       {
-        printf("ARP Request");
+        printf("Sending the ARP Request\n");
         // Create the ARP reply
         // Recycle the ethernet header by updating the source and destination header, the type can stay as 0x806
         printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
         printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
         e_h.ether_type = e_h.ether_type;
         memcpy(&e_h.ether_dhost,e_h.ether_shost,sizeof(e_h.ether_shost));
+        printf("chMAC before: %s\n",chMAC);
         memcpy(&e_h.ether_shost,chMAC,sizeof(e_h.ether_shost));
+        printf("chMAC After %s\n",chMAC);
         printf("new destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
         printf("new source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
-
-        /* Recycle the ARP header by updating the source and destination mac/ip, opcode needs = 2 for request, the type can stay as 0x806, 
-          hardware type, hardware address
-        */
-        /* FIXED DATA */
-        full_arp_h.ea_hdr.ar_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
-        full_arp_h.ea_hdr.ar_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
-        full_arp_h.ea_hdr.ar_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
-        full_arp_h.ea_hdr.ar_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
-
-        // = //mac of r1 (we dont currently know)
-        full_arp_h.ea_hdr.ar_op = 2; 
+        printf("IP Protocol: %d\n",  __bswap_16 (full_arp_h.ea_hdr.ar_op)); 
 
         //Only for assigning new values before sending on the socket
         memcpy(&full_arp_h.arp_sha,&e_h.ether_shost,sizeof(full_arp_h.arp_sha)); /* sender hardware address */
@@ -355,15 +261,14 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
 
         memcpy(&full_arp_h.arp_spa,&temp_dst_ip,sizeof(temp_dst_ip)); //Take the ip of the source from the arp header and replace it with the destination ip
         memcpy(&full_arp_h.arp_tpa,&temp_src_ip,sizeof(temp_src_ip)); //Take the ip of the destination from the arp header and replace it with the source ip
-
-      }
-
-
+      
+      printf("\nSending the ARP reply\n");
       printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
       printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
       printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
       printf("Got a %d byte packet\n", n);
-      printf("IP Protocol: %d\n", ip_h.protocol);
+      printf("IP Protocol: %d\n", __bswap_16 (full_arp_h.ea_hdr.ar_op));
+      }
     }
     sleep(3);
 
