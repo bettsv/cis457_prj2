@@ -310,7 +310,7 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
       
       /* FIXED DATA */
       full_arp_h.ea_hdr.ar_hrd = 1;                     //#bit 0-15   /* Format of hardware address.  unsigned short int*/
-      full_arp_h.ea_hdr.ar_pro = ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
+      full_arp_h.ea_hdr.ar_pro = 2048; //ntohs(e_h.ether_type); //#bit 16-31     /* Format of protocol address.  unsigned short int*/
       full_arp_h.ea_hdr.ar_hln = 6;                     //#bit 32-47   /* Length of hardware address.  unsigned char*/
       full_arp_h.ea_hdr.ar_pln = 4;                     //#bit 48-55   /* Length of protocol address.  unsigned char*/
       
