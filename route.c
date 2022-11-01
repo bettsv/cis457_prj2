@@ -61,14 +61,12 @@ int main(){
     if(recvaddr.sll_pkttype==PACKET_OUTGOING)
       continue;
     //start processing all others
+    struct ether_header eh;
     printf("-------------------\n");
-    
-      
     if (ntohs(eh.ether_type) == 0x800)
     {
       printf("ICMP type\n");
       printf("Got a %d byte packet\n", n);
-      struct ether_header eh;
       memcpy(& eh, buf, 14);
       printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_dhost));
       printf("Source: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_shost));
@@ -78,10 +76,9 @@ int main(){
        printf("IP destination: %s\n", ether_ntoa((struct ether_addr *)&ih.daddr));
        printf("IP source: %s\n", ether_ntoa((struct ether_addr *)&ih.saddr));
     }
-    else if (ntohs(e_h.ether_type) == 0x806) {
+    else if (ntohs(eh.ether_type) == 0x806) {
       printf("ARP Type\n");
       printf("Got a %d byte packet\n", n);
-      struct ether_header eh;
       memcpy(& eh, buf, 14);
       printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_dhost));
       printf("Source: %s\n", ether_ntoa((struct ether_addr *)&eh.ether_shost));
