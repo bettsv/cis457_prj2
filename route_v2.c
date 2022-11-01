@@ -23,32 +23,32 @@
 
 char data_msg[200];
 
-struct arphdr
-{
-  unsigned short int arp_hrd; /* Format of hardware address.  */
-  unsigned short int arp_pro; /* Format of protocol address.  */
-  unsigned char arp_hln;      /* Length of hardware address.  */
-  unsigned char arp_pln;      /* Length of protocol address.  */
-  unsigned short int arp_op;  /* ARP opcode (command).  */
-};
-struct ether_arp
-{
-  struct arphdr ea_hdr;       /* fixed-size header */
-  u_int8_t arp_sha[ETH_ALEN]; /* sender hardware address */
-  u_int8_t arp_spa[4];        /* sender protocol address */
-  u_int8_t arp_tha[ETH_ALEN]; /* target hardware address */
-  u_int8_t arp_tpa[4];        /* target protocol address */
-};
+// struct arphdr
+// {
+//   unsigned short int arp_hrd; /* Format of hardware address.  */
+//   unsigned short int arp_pro; /* Format of protocol address.  */
+//   unsigned char arp_hln;      /* Length of hardware address.  */
+//   unsigned char arp_pln;      /* Length of protocol address.  */
+//   unsigned short int arp_op;  /* ARP opcode (command).  */
+// };
+// struct ether_arp
+// {
+//   struct arphdr ea_hdr;       /* fixed-size header */
+//   u_int8_t arp_sha[ETH_ALEN]; /* sender hardware address */
+//   u_int8_t arp_spa[4];        /* sender protocol address */
+//   u_int8_t arp_tha[ETH_ALEN]; /* target hardware address */
+//   u_int8_t arp_tpa[4];        /* target protocol address */
+// };
 
-struct icmp
-{
-  u_int8_t type;      //#bit 0-7
-  u_int8_t code;      //#bit 8-15
-  u_int16_t checksum; //#bit 16-31
-  u_int16_t id;       //#bit 32-47
-  u_int16_t snum;     //#bit 48-63
-  char opt[8];        // #bit 64-127
-};
+// struct icmp
+// {
+//   u_int8_t type;      //#bit 0-7
+//   u_int8_t code;      //#bit 8-15
+//   u_int16_t checksum; //#bit 16-31
+//   u_int16_t id;       //#bit 32-47
+//   u_int16_t snum;     //#bit 48-63
+//   char opt[8];        // #bit 64-127
+// };
 
 struct ipv4
 {
@@ -67,38 +67,38 @@ struct ipv4
   char options[8]; //
   char data[8];    // 64 bits
 };
-struct ifmap
-{
-  unsigned long mem_start;
-  unsigned long mem_end;
-  unsigned short base_addr;
-  unsigned char irq;
-  unsigned char dma;
-  unsigned char port;
-};
-struct ifreq
-{
-#define IFHWADDRLEN 6
-#define IFNAMSIZ IF_NAMESIZE
+// struct ifmap
+// {
+//   unsigned long mem_start;
+//   unsigned long mem_end;
+//   unsigned short base_addr;
+//   unsigned char irq;
+//   unsigned char dma;
+//   unsigned char port;
+// };
+// struct ifreq
+// {
+// #define IFHWADDRLEN 6
+// #define IFNAMSIZ IF_NAMESIZE
 
-  char ifr_name[IFNAMSIZ]; /* Interface name */
-  union
-  {
-    struct sockaddr ifr_addr;
-    struct sockaddr ifr_dstaddr;
-    struct sockaddr ifr_broadaddr;
-    struct sockaddr ifr_netmask;
-    struct sockaddr ifr_hwaddr;
-    short ifr_flags;
-    int ifr_ifindex;
-    int ifr_metric;
-    int ifr_mtu;
-    struct ifmap ifr_map;
-    char ifr_slave[IFNAMSIZ];
-    char ifr_newname[IFNAMSIZ];
-    char *ifr_data;
-  };
-};
+//   char ifr_name[IFNAMSIZ]; /* Interface name */
+//   union
+//   {
+//     struct sockaddr ifr_addr;
+//     struct sockaddr ifr_dstaddr;
+//     struct sockaddr ifr_broadaddr;
+//     struct sockaddr ifr_netmask;
+//     struct sockaddr ifr_hwaddr;
+//     short ifr_flags;
+//     int ifr_ifindex;
+//     int ifr_metric;
+//     int ifr_mtu;
+//     struct ifmap ifr_map;
+//     char ifr_slave[IFNAMSIZ];
+//     char ifr_newname[IFNAMSIZ];
+//     char *ifr_data;
+//   };
+// };
   u_int8_t temp_src_ip[4]; 
   u_int8_t temp_dst_ip[4];
 
