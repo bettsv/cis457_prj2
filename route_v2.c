@@ -18,76 +18,75 @@
 #include <sys/ioctl.h>
 #include <net/if_arp.h>
 #include <byteswap.h>
+#include <netdb.h>
+#define _GNU_SOURCE /* To get defns of NI_MAXSERV and NI_MAXHOST */
 
 #define MAC_ANY "00:00:00:00:00:00"
 #define MAC_BCAST "FF:FF:FF:FF:FF:FF"
 
 char data_msg[200];
-u_int8_t temp_src_ip[4]; 
+u_int8_t temp_src_ip[4];
 u_int8_t temp_dst_ip[4];
+
+
+
 
 int main()
 {
-  int iNetType;
+  // int iNetType;
   char chMAC[6];
+  // u_int8_t chMAC[ETH_ALEN];
 
+  // struct ifreq ifr;
+  // int sock;
+  // char *ifname = NULL;
+
+  // if (!iNetType)
+  // {
+  //   ifname = "eth0"; /* Ethernet */
+  // }
+  // else
+  // {
+  //   ifname = "wlan0"; /* Wifi */
+  // }
+  // sock = socket(AF_INET, SOCK_DGRAM, 0);
+  // strcpy(ifr.ifr_name, ifname);
+  // ifr.ifr_addr.sa_family = AF_INET;
+  // ioctl(sock, SIOCGIFHWADDR, &ifr);
+  // memcpy(chMAC, ifr.ifr_hwaddr.sa_data, 6);
+  // close(sock);
+  // printf("My MAC is [%s]\n", ifr.ifr_hwaddr.sa_data);
+  
+  //-------------------------------------------------------------------------------------------------
   struct ifreq ifr;
-  int sock;
-  char *ifname = NULL;
-
-  if (!iNetType)
-  {
-    ifname = "eth0"; /* Ethernet */
+  size_t if_name_len=strlen(if_name);
+  if (if_name_len<sizeof(ifr.ifr_name)) {
+      memcpy(ifr.ifr_name,if_name,if_name_len);
+      ifr.ifr_name[if_name_len]=0;
+  } else {
+      die("interface name is too long");
   }
-  else
-  {
-    ifname = "wlan0"; /* Wifi */
+
+  int fd=socket(AF_UNIX,SOCK_DGRAM,0);
+  if (fd==-1) {
+      die("%s",strerror(errno));
   }
-  sock = socket(AF_INET, SOCK_DGRAM, 0);
-  strcpy(ifr.ifr_name, ifname);
-  ifr.ifr_addr.sa_family = AF_INET;
-  ioctl(sock, SIOCGIFHWADDR, &ifr);
-  memcpy(chMAC, ifr.ifr_hwaddr.sa_data, 6);
-  close(sock);
-/*
--------------------------------------------------------------------------------------------------
-struct ifreq ifr;
-size_t if_name_len=strlen(if_name);
-if (if_name_len<sizeof(ifr.ifr_name)) {
-    memcpy(ifr.ifr_name,if_name,if_name_len);
-    ifr.ifr_name[if_name_len]=0;
-} else {
-    die("interface name is too long");
-}
 
-int fd=socket(AF_UNIX,SOCK_DGRAM,0);
-if (fd==-1) {
-    die("%s",strerror(errno));
-}
+  if (ioctl(fd,SIOCGIFHWADDR,&ifr)==-1) {
+      int temp_errno=errno;
+      close(fd);
+      die("%s",strerror(temp_errno));
+  }
+  close(fd);
 
-if (ioctl(fd,SIOCGIFHWADDR,&ifr)==-1) {
-    int temp_errno=errno;
-    close(fd);
-    die("%s",strerror(temp_errno));
-}
-close(fd);
+  if (ifr.ifr_hwaddr.sa_family!=ARPHRD_ETHER) {
+      die("not an Ethernet interface");
+  }
 
-if (ifr.ifr_hwaddr.sa_family!=ARPHRD_ETHER) {
-    die("not an Ethernet interface");
-}vv
-
-const unsigned char* mac=(unsigned char*)ifr.ifr_hwaddr.sa_data;
-printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
-    mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
--------------------------------------------------------------------------------------------------
-*/
-
-
-
-
-
-
-
+  const unsigned char* mac=(unsigned char*)ifr.ifr_hwaddr.sa_data;
+  printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
+      mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+  //-------------------------------------------------------------------------------------------------
 
 
   int packet_socket;
@@ -97,11 +96,7 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
   common since most interfaces will have a MAC, IPv4, and IPv6 address. You can use the
   names to match up which IPv4 address goes with which MAC address.*/
   struct ifaddrs *ifaddr, *tmp;
-  if (getifaddrs(&ifaddr) == -1)
-  {
-    perror("getifaddrs");
-    return 1;
-  }
+ 
   // have the list, loop over the list
   for (tmp = ifaddr; tmp != NULL; tmp = tmp->ifa_next)
   {
@@ -178,7 +173,6 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
     //   // Parse a request from h1
     //   printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
 
-      
     //   // /*[Eth header][IP header][ICMP header]*/
 
     //   // // Eth header (type,source mac, dest mac)
@@ -226,16 +220,16 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
       printf("ARP Type\n");
 
       struct ether_arp full_arp_h;
-      
-      //Offset buf by the size of the eth header and populate the arp struct based off the remaining data that buf has
-      //printf("size of e_h:[%lu]\n",sizeof(e_h));  //14
-      //printf("size of full_arp_h:[%lu]\n",sizeof(full_arp_h));  //28
-      //printf("size of ip_h:[%lu]\n",sizeof(ip_h));    //20
-      //printf("size of icmp_h:[%lu]\n",sizeof(icmp_h));  //28
-      //e_h ranges from bytes 0-13
+
+      // Offset buf by the size of the eth header and populate the arp struct based off the remaining data that buf has
+      // printf("size of e_h:[%lu]\n",sizeof(e_h));  //14
+      // printf("size of full_arp_h:[%lu]\n",sizeof(full_arp_h));  //28
+      // printf("size of ip_h:[%lu]\n",sizeof(ip_h));    //20
+      // printf("size of icmp_h:[%lu]\n",sizeof(icmp_h));  //28
+      // e_h ranges from bytes 0-13
       memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h)); // Store byte 14 - 41 in the full arp struct
-      
-      if(__bswap_16 (full_arp_h.ea_hdr.ar_op) == 1)
+
+      if (__bswap_16(full_arp_h.ea_hdr.ar_op) == 1)
       {
         printf("Sending the ARP Request\n");
         // Create the ARP reply
@@ -243,31 +237,31 @@ printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
         printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
         printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
         e_h.ether_type = e_h.ether_type;
-        memcpy(&e_h.ether_dhost,e_h.ether_shost,sizeof(e_h.ether_shost));
-        printf("chMAC before: %s\n",chMAC);
-        memcpy(&e_h.ether_shost,chMAC,sizeof(e_h.ether_shost));
-        printf("chMAC After %s\n",chMAC);
+        memcpy(&e_h.ether_dhost, e_h.ether_shost, sizeof(e_h.ether_shost));
+        printf("chMAC before: %s\n", chMAC);
+        memcpy(&e_h.ether_shost, chMAC, sizeof(e_h.ether_shost));
+        printf("chMAC After %s\n", chMAC);
         printf("new destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
         printf("new source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
-        printf("IP Protocol: %d\n",  __bswap_16 (full_arp_h.ea_hdr.ar_op)); 
+        printf("IP Protocol: %d\n", __bswap_16(full_arp_h.ea_hdr.ar_op));
 
-        //Only for assigning new values before sending on the socket
-        memcpy(&full_arp_h.arp_sha,&e_h.ether_shost,sizeof(full_arp_h.arp_sha)); /* sender hardware address */
-        memcpy(&full_arp_h.arp_tha,&e_h.ether_dhost,sizeof(full_arp_h.arp_tha)); /* target hardware address */
+        // Only for assigning new values before sending on the socket
+        memcpy(&full_arp_h.arp_sha, &e_h.ether_shost, sizeof(full_arp_h.arp_sha)); /* sender hardware address */
+        memcpy(&full_arp_h.arp_tha, &e_h.ether_dhost, sizeof(full_arp_h.arp_tha)); /* target hardware address */
 
         /* sender protocol address --  -- use a temp variable to protect the data */
-        memcpy(&temp_src_ip,&full_arp_h.arp_spa,sizeof(temp_src_ip)); //use a temp variable to protect the data
-        memcpy(&temp_dst_ip,&full_arp_h.arp_tpa,sizeof(temp_dst_ip)); //use a temp variable to protect the data
+        memcpy(&temp_src_ip, &full_arp_h.arp_spa, sizeof(temp_src_ip)); // use a temp variable to protect the data
+        memcpy(&temp_dst_ip, &full_arp_h.arp_tpa, sizeof(temp_dst_ip)); // use a temp variable to protect the data
 
-        memcpy(&full_arp_h.arp_spa,&temp_dst_ip,sizeof(temp_dst_ip)); //Take the ip of the source from the arp header and replace it with the destination ip
-        memcpy(&full_arp_h.arp_tpa,&temp_src_ip,sizeof(temp_src_ip)); //Take the ip of the destination from the arp header and replace it with the source ip
-      
-      printf("\nSending the ARP reply\n");
-      printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
-      printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
-      printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
-      printf("Got a %d byte packet\n", n);
-      printf("IP Protocol: %d\n", __bswap_16 (full_arp_h.ea_hdr.ar_op));
+        memcpy(&full_arp_h.arp_spa, &temp_dst_ip, sizeof(temp_dst_ip)); // Take the ip of the source from the arp header and replace it with the destination ip
+        memcpy(&full_arp_h.arp_tpa, &temp_src_ip, sizeof(temp_src_ip)); // Take the ip of the destination from the arp header and replace it with the source ip
+
+        printf("\nSending the ARP reply\n");
+        printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
+        printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
+        printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
+        printf("Got a %d byte packet\n", n);
+        printf("IP Protocol: %d\n", __bswap_16(full_arp_h.ea_hdr.ar_op));
       }
     }
     sleep(3);
