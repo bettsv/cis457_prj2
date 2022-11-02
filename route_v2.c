@@ -39,6 +39,11 @@ u_int8_t temp_dst_ip[4];
 int i = 1;
 int main()
 {
+  /** Beginning of cited code **/
+  /*
+  Credit goes to: https://stackoverflow.com/questions/1779715/how-to-get-mac-address-of-your-machine-using-a-c-program
+  */
+
   int packet_socket;
   /* get list of interface addresses. This is a linked list. Next pointer is in ifa_next,
   interface name is in ifa_name, address is in ifa_addr. You will have multiple entries
@@ -91,6 +96,7 @@ int main()
     { /* handle error */
     }
   }
+  /** End of cited code **/
 
   unsigned char chMAC[6];
 
