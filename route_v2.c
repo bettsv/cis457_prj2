@@ -29,7 +29,7 @@ u_int8_t temp_src_ip[4];
 u_int8_t temp_dst_ip[4];
 u_int8_t  temp_ether_dhost[ETH_ALEN];        /* destination eth addr        */
 u_int8_t  temp_ether_shost[ETH_ALEN];        /* source ether addr        */
-
+int i = 1;
 int main()
 {
   int packet_socket;
@@ -266,8 +266,8 @@ int main()
         
         memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
         memcpy(&buf[sizeof(e_h)],&full_arp_h,sizeof(full_arp_h));
-        //int n = sendto(packet_socket, buf, 1500, 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
-        //printf("SENT");
+        int n = sendto(packet_socket, buf, 42, 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
+        printf("SENT %d\n", i++);
       }
     }
     sleep(2);
