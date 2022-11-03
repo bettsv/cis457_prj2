@@ -99,7 +99,7 @@ int main()
   }
   /** End of cited code **/
 
-  unsigned char chMAC[6];
+  uint8_t chMAC[6];
 
   if (success)
     memcpy(chMAC, ifr.ifr_hwaddr.sa_data, 6);
@@ -218,19 +218,19 @@ int main()
         else if (icmp_h.type == 8)
         {
           printf("ICMP Request\n");
-
           /**** Update the new Ethernet Header ****/
-
-          // Grabs the hosts mac address from chMAC and stores it into e_h.ether_shost for the Ethernet Header
-          memcpy(&e_h.ether_shost, chMAC, sizeof(e_h.ether_shost));
 
           // use a temp variable to protect the data
           memcpy(&temp_ether_dhost, &e_h.ether_dhost, sizeof(temp_ether_dhost));
           memcpy(&temp_ether_shost, &e_h.ether_shost, sizeof(temp_ether_dhost));
 
+          // Grabs the hosts mac address from chMAC and stores it into e_h.ether_shost for the Ethernet Header
+          memcpy(&e_h.ether_shost, &chMAC, sizeof(e_h.ether_shost)); // Replaces all zeros with the mac
+
           // Updating the ethernet header
-          memcpy(&e_h.ether_shost, &temp_ether_dhost, sizeof(temp_ether_dhost));
+          // memcpy(&e_h.ether_shost,&temp_ether_dhost,sizeof(temp_ether_dhost));
           memcpy(&e_h.ether_dhost, &temp_ether_shost, sizeof(temp_ether_dhost));
+          // Type does not net to be changed, must be 0x806 for ARP
 
           // Type does not net to be changed, must be 0x800 for ICMP
 
@@ -277,7 +277,7 @@ int main()
           // Setting the new Ethernet header and ARP header
           memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
           memcpy(&buf[sizeof(e_h)], &ip_h, sizeof(ip_h));
-          memcpy(&buf[sizeof(e_h)+sizeof(ip_h)], &icmp_h, sizeof(icmp_h));
+          memcpy(&buf[sizeof(e_h) + sizeof(ip_h)], &icmp_h, sizeof(icmp_h));
 
           // Send the num data on via the socket
           int n = sendto(packet_socket, buf, sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h), 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
@@ -309,17 +309,14 @@ int main()
         printf("Type: 0x%03x\n", e_h.ether_type);
 
         printf("------------Full ARP Header------------\n");
-        printf("Hardware Type: %d\n", full_arp_h.ea_hdr.ar_hrd);                                      // unsigned short
-        printf("Protocol Type: %d\n", __bswap_16(full_arp_h.ea_hdr.ar_pro));                          // unsigned short
-        printf("Hardware Address Length: %c\n", full_arp_h.ea_hdr.ar_hln);                            // unsigned char
-        printf("Protocol Address Length: %c\n", full_arp_h.ea_hdr.ar_pln);                            // unsigned char
-        printf("Sender Hardware Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha));  // u_int8_t
-        printf("Sender Protocol Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_spa));  // u_int8_t
-        printf("Target Hardware Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha));  // u_int8_t
-        printf("Target Protocol Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_tpa));  // u_int8_t
-
-        
-        printf("chMAC %s\n", ether_ntoa((struct ether_addr *)&chMAC));
+        printf("Hardware Type: %d\n", full_arp_h.ea_hdr.ar_hrd);                                       // unsigned short
+        printf("Protocol Type: %d\n", __bswap_16(full_arp_h.ea_hdr.ar_pro));                           // unsigned short
+        printf("Hardware Address Length: %d\n", full_arp_h.ea_hdr.ar_hln);                             // unsigned char
+        printf("Protocol Address Length: %d\n", full_arp_h.ea_hdr.ar_pln);                             // unsigned char
+        printf("Sender Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha)); // u_int8_t
+        printf("Sender Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_spa)); // u_int8_t
+        printf("Target Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha)); // u_int8_t
+        printf("Target Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tpa)); // u_int8_
 
         // Only for assigning new values before sending on the socket
         memcpy(&full_arp_h.arp_sha, &e_h.ether_shost, sizeof(full_arp_h.arp_sha)); /* sender hardware address */
@@ -327,76 +324,77 @@ int main()
 
         /**** Update the new Ethernet Header ****/
 
-        // Grabs the hosts mac address from chMAC and stores it into e_h.ether_shost for the Ethernet Header
-        memcpy(&e_h.ether_shost, chMAC, sizeof(e_h.ether_shost));
-
         // use a temp variable to protect the data
-        memcpy(&temp_ether_dhost,&e_h.ether_dhost,sizeof(temp_ether_dhost));
-        memcpy(&temp_ether_shost,&e_h.ether_shost,sizeof(temp_ether_dhost));
-       
-        // Updating the ethernet header
-        memcpy(&e_h.ether_shost,&temp_ether_dhost,sizeof(temp_ether_dhost));
-        memcpy(&e_h.ether_dhost,&temp_ether_shost,sizeof(temp_ether_dhost));
-        // Type does not net to be changed, must be 0x806 for ARP
+        memcpy(&temp_ether_dhost, &e_h.ether_dhost, sizeof(temp_ether_dhost));
+        memcpy(&temp_ether_shost, &e_h.ether_shost, sizeof(temp_ether_dhost));
 
+        // Grabs the hosts mac address from chMAC and stores it into e_h.ether_shost for the Ethernet Header
+        memcpy(&e_h.ether_shost, &chMAC, sizeof(e_h.ether_shost)); // Replaces all zeros with the mac
+
+        // Updating the ethernet header
+        // memcpy(&e_h.ether_shost,&temp_ether_dhost,sizeof(temp_ether_dhost));
+        memcpy(&e_h.ether_dhost, &temp_ether_shost, sizeof(temp_ether_dhost));
+        // Type does not net to be changed, must be 0x806 for ARP
 
         /**** Update new full_arp_h ip addresses ****/
         // use a temp variable to protect the data
         memcpy(&temp_src_ip, &full_arp_h.arp_spa, sizeof(temp_src_ip)); // use a temp variable to protect the data
         memcpy(&temp_dst_ip, &full_arp_h.arp_tpa, sizeof(temp_dst_ip)); // use a temp variable to protect the data
-        
+
         // IP for source and destination swapped
         memcpy(&full_arp_h.arp_spa, &temp_dst_ip, sizeof(temp_dst_ip)); // Take the ip of the source from the arp header and replace it with the destination ip
         memcpy(&full_arp_h.arp_tpa, &temp_src_ip, sizeof(temp_src_ip)); // Take the ip of the destination from the arp header and replace it with the source ip
-        
+
         /* fix me Update new IP within full_arp_h mac addresses */
 
         // Grabs the hosts mac address from chMAC and stores it into e_h.ether_shost for the IP Header
-        memcpy(&temp_ip_dhost, chMAC, sizeof(temp_ip_dhost));
+        // memcpy(&temp_ip_dhost, &chMAC, sizeof(temp_ip_dhost));
 
-        // use a temp variable to protect the data
-        memcpy(&temp_ip_shost,&full_arp_h.arp_spa,sizeof(temp_ip_dhost));        /* source ether addr        */
-        memcpy(&temp_ip_dhost,&full_arp_h.arp_tpa, sizeof(temp_ip_dhost));        /* destination eth addr        */
-        
-        // MAC for source and destination swapped
-        memcpy(&full_arp_h.arp_tpa,&temp_ip_shost,sizeof(temp_ip_shost));        /* source ether addr        */
-        memcpy(&full_arp_h.arp_spa,&temp_ip_dhost,sizeof(temp_ip_dhost));        /* destination eth addr        */
-        
+        // // use a temp variable to protect the data
+        // memcpy(&temp_ip_shost,&full_arp_h.arp_sha,sizeof(temp_ip_dhost));        /* source ether addr        */
+        // memcpy(&temp_ip_dhost,&full_arp_h.arp_tha, sizeof(temp_ip_dhost));        /* destination eth addr        */
+
+        // // MAC for source and destination swapped
+        // memcpy(&full_arp_h.arp_tha,&temp_ether_shost,sizeof(temp_ip_shost));        /* source ether addr        */
+        // //memcpy(&full_arp_h.arp_sha,&temp_ip_dhost,sizeof(temp_ip_dhost));        /* destination eth addr        */
+        // memcpy(&full_arp_h.arp_sha, &chMAC, sizeof(full_arp_h.arp_sha)); //Replaces all zeros with the mac
+
         // The opcode was updated to be 2 in big endian format
         full_arp_h.ea_hdr.ar_op = __bswap_16(2);
 
+        memcpy(&full_arp_h.arp_sha, &chMAC, sizeof(chMAC));
+        memcpy(&full_arp_h.arp_tha, &temp_ether_shost, sizeof(chMAC));
+
         sleep(2);
-        //Hardware type for source and dest plus protocol for source and dest do not need to be changed.
+        // Hardware type for source and dest plus protocol for source and dest do not need to be changed.
         printf("\n********************Sending the ARP reply********************\n");
         printf("------------Ethernet Header------------\n");
         printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
         printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
         printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
-        
-        printf("------------Full ARP Header------------\n"); 
-        printf("Hardware Type: %d\n",full_arp_h.ea_hdr.ar_hrd);  // unsigned short
-        printf("Protocol Type: %d\n",full_arp_h.ea_hdr.ar_pro);  //unsigned short
-        printf("Hardware Address Length: %c\n",full_arp_h.ea_hdr.ar_hln);  // unsigned char
-        printf("Protocol Address Length: %c\n",full_arp_h.ea_hdr.ar_pln);  // unsigned char
-        printf("Sender Hardware Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha));  // u_int8_t
-        printf("Sender Protocol Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_spa));  // u_int8_t
-        printf("Target Hardware Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha));  // u_int8_t
-        printf("Target Protocol Address: %s\n",ether_ntoa((struct ether_addr *)&full_arp_h.arp_tpa));  // u_int8_t
-  
-  
+
+        printf("------------Full ARP Header------------\n");
+        printf("Hardware Type: %d\n", full_arp_h.ea_hdr.ar_hrd);                                       // unsigned short
+        printf("Protocol Type: %d\n", full_arp_h.ea_hdr.ar_pro);                                       // unsigned short
+        printf("Hardware Address Length: %c\n", full_arp_h.ea_hdr.ar_hln);                             // unsigned char
+        printf("Protocol Address Length: %c\n", full_arp_h.ea_hdr.ar_pln);                             // unsigned char
+        printf("Sender Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha)); // u_int8_t
+        printf("Sender Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_spa)); // u_int8_t
+        printf("Target Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha)); // u_int8_t
+        printf("Target Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tpa)); // u_int8_t
+
         printf("Got a %d byte packet\n", n);
         printf("IP Protocol: %d\n", __bswap_16(full_arp_h.ea_hdr.ar_op));
-        
+
         // Setting the new Ethernet header and ARP header
         memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
-        memcpy(&buf[sizeof(e_h)],&full_arp_h,sizeof(full_arp_h));
-        
+        memcpy(&buf[sizeof(e_h)], &full_arp_h, sizeof(full_arp_h));
+
         // Send the num data on via the socket
-        int n = sendto(packet_socket, buf, sizeof(e_h)+sizeof(full_arp_h), 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
+        int n = sendto(packet_socket, buf, sizeof(e_h) + sizeof(full_arp_h), 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
         printf("SENT ARP %d\n", j++);
       }
     }
-    
 
     // what else to do is up to you, you can send packets with send, just like we used for TCP sockets (or you can use sendto, but it is not necessary, since the headers, including all addresses, need to be in the buffer you are sending)
   }

@@ -40,7 +40,7 @@ int main(int argc, char **argv)
       	struct iphdr ih;
       	memcpy(&ih, buf, 20);
       	printf("IP destination: %s\n", ether_ntoa((struct ether_addr *)&ih.daddr));
-      	printf("IP source: %s\n", ether_ntoa((struct ether_addr *)&ih.saddr));
+      	printf("IP source: %d\n", ip_ntoa((struct ether_addr *)&ih.saddr));
       }
       printf("-------------------\n");
     }
