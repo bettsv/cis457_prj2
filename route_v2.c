@@ -299,6 +299,7 @@ int main()
       // Parse the the buffer after the Ethernet Header and place the data into the full_arp_h structure
       memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h)); // Store byte 14 - 41 in the full arp struct
 
+      //if (ntoh(full_arp_h.ea_hdr.ar_op) == 1)
       if (__bswap_16(full_arp_h.ea_hdr.ar_op) == 1)
       {
         sleep(2);
@@ -306,7 +307,7 @@ int main()
         printf("------------Ethernet Header------------\n");
         printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
         printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
-        printf("Type: 0x%03x\n", e_h.ether_type);
+        printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
 
         printf("------------Full ARP Header------------\n");
         printf("Hardware Type: %d\n", full_arp_h.ea_hdr.ar_hrd);                                       // unsigned short
@@ -314,9 +315,9 @@ int main()
         printf("Hardware Address Length: %d\n", full_arp_h.ea_hdr.ar_hln);                             // unsigned char
         printf("Protocol Address Length: %d\n", full_arp_h.ea_hdr.ar_pln);                             // unsigned char
         printf("Sender Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha)); // u_int8_t
-        printf("Sender Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_spa)); // u_int8_t
+        //printf("Sender Protocol Address: %s\n", inet_ntoa((struct in_addr)full_arp_h.arp_spa)); // u_int8_t
         printf("Target Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha)); // u_int8_t
-        printf("Target Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tpa)); // u_int8_
+        //printf("Target Protocol Address: %s\n",inet_ntoa((struct in_addr)full_arp_h.arp_tpa)); // u_int8_
 
         // Only for assigning new values before sending on the socket
         memcpy(&full_arp_h.arp_sha, &e_h.ether_shost, sizeof(full_arp_h.arp_sha)); /* sender hardware address */
@@ -360,7 +361,7 @@ int main()
         // memcpy(&full_arp_h.arp_sha, &chMAC, sizeof(full_arp_h.arp_sha)); //Replaces all zeros with the mac
 
         // The opcode was updated to be 2 in big endian format
-        full_arp_h.ea_hdr.ar_op = __bswap_16(2);
+        //full_arp_h.ea_hdr.ar_op = __bswap_16(2);
 
         memcpy(&full_arp_h.arp_sha, &chMAC, sizeof(chMAC));
         memcpy(&full_arp_h.arp_tha, &temp_ether_shost, sizeof(chMAC));
@@ -379,12 +380,12 @@ int main()
         printf("Hardware Address Length: %c\n", full_arp_h.ea_hdr.ar_hln);                             // unsigned char
         printf("Protocol Address Length: %c\n", full_arp_h.ea_hdr.ar_pln);                             // unsigned char
         printf("Sender Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha)); // u_int8_t
-        printf("Sender Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_spa)); // u_int8_t
+        //printf("Sender Protocol Address: %s\n",inet_ntoa(full_arp_h.arp_spa)); // u_int8_t
         printf("Target Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha)); // u_int8_t
-        printf("Target Protocol Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tpa)); // u_int8_t
+        //printf("Target Protocol Address: %s\n", inet_ntoa(full_arp_h.arp_tpa)); // u_int8_t
 
         printf("Got a %d byte packet\n", n);
-        printf("IP Protocol: %d\n", __bswap_16(full_arp_h.ea_hdr.ar_op));
+        printf("IP Protocol: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.ea_hdr.ar_op));
 
         // Setting the new Ethernet header and ARP header
         memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
