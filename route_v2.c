@@ -277,6 +277,8 @@ int main()
           // Protocol of 1 means we are working with ICMP
           ip_h.protocol = 1;
 
+          // Properly call checksum and then directly set the new checksum value using memcpy
+          memcpy(&icmp_h.checksum,cksum(),sizeof(icmp_h.checksum));
           // Header checksum
           //sleep(2);
           printf("********************Sent ICMP Reply********************\n");
