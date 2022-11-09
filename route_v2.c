@@ -39,10 +39,10 @@ u_int8_t temp_dst_ip[4];
 int i = 1;
 int j = 1;
 
-u_short
-cksum(u_short *buf, int count)
+u_int32_t
+cksum(u_int32_t *buf, int count)
 {
-    register u_long sum = 0;
+    register u_int32_t sum = 0;
 
     while (count--)
     {
@@ -279,6 +279,7 @@ int main()
 
           // Properly call checksum and then directly set the new checksum value using memcpy
           memcpy(&icmp_h.checksum,cksum(&buf,sizeof(buf)),sizeof(icmp_h.checksum));
+          //u_int32_t tst = cksum(buf,sizeof(buf));
           // Header checksum
           //sleep(2);
           printf("********************Sent ICMP Reply********************\n");
