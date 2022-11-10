@@ -39,22 +39,37 @@ u_int8_t temp_dst_ip[4];
 int i = 1;
 int j = 1;
 
-u_int32_t
-cksum(u_int32_t *buf, int count)
-{
-    register u_int32_t sum = 0;
+// u_int16_t cksum(void *buf, int count)
+// {
+//     register u_int32_t sum = 0;
 
-    while (count--)
-    {
+//     while (count--)
+//     {
+//         sum += *buf++;
+//         if (sum & 0xFFFF0000)
+//         {
+//             /* carry occurred, so wrap around */
+//             sum &= 0xFFFF;
+//             sum++;
+//         }
+//     }
+//     return ~(sum & 0xFFFF);
+// }
+
+// Calculating the Check Sum
+u_int16_t cksum(void *b, int len)
+{    unsigned short *buf = b;
+    unsigned int sum=0;
+    unsigned short result;
+ 
+    for ( sum = 0; len > 1; len -= 2 )
         sum += *buf++;
-        if (sum & 0xFFFF0000)
-        {
-            /* carry occurred, so wrap around */
-            sum &= 0xFFFF;
-            sum++;
-        }
-    }
-    return ~(sum & 0xFFFF);
+    if ( len == 1 )
+        sum += *(unsigned char*)buf;
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    result = ~sum;
+    return result;
 }
 
 int main()
@@ -278,7 +293,7 @@ int main()
           ip_h.protocol = 1;
 
           // Properly call checksum and then directly set the new checksum value using memcpy
-          memcpy(&icmp_h.checksum,cksum(&buf,sizeof(buf)),sizeof(icmp_h.checksum));
+          memcpy(&icmp_h.checksum,cksum(&icmp_h,sizeof(icmp_h)),sizeof(icmp_h.checksum));
           //u_int32_t tst = cksum(buf,sizeof(buf));
           // Header checksum
           //sleep(2);
