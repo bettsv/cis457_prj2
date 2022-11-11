@@ -58,18 +58,19 @@ int j = 1;
 
 // Calculating the Check Sum
 u_int16_t cksum(void *b, int len)
-{    unsigned short *buf = b;
-    unsigned int sum=0;
-    unsigned short result;
- 
-    for ( sum = 0; len > 1; len -= 2 )
-        sum += *buf++;
-    if ( len == 1 )
-        sum += *(unsigned char*)buf;
-    sum = (sum >> 16) + (sum & 0xFFFF);
-    sum += (sum >> 16);
-    result = ~sum;
-    return result;
+{
+  unsigned short *buf = b;
+  unsigned int sum = 0;
+  unsigned short result;
+
+  for (sum = 0; len > 1; len -= 2)
+    sum += *buf++;
+  if (len == 1)
+    sum += *(unsigned char *)buf;
+  sum = (sum >> 16) + (sum & 0xFFFF);
+  sum += (sum >> 16);
+  result = ~sum;
+  return result;
 }
 
 int main()
@@ -200,10 +201,10 @@ int main()
     struct ether_header e_h;
     struct iphdr ip_h;
     struct icmphdr icmp_h;
-    //char data[1500];
+    // char data[1500];
 
-    //memcpy(&data,&buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)],sizeof(data));
-    //printf("data len :[%lu]\n",n - (sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)));
+    // memcpy(&data,&buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)],sizeof(data));
+    // printf("data len :[%lu]\n",n - (sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)));
 
     // printf("The size of eh is [%lu] bytes.\n",sizeof(eh));
     //  Copy the first 14 bytes from the buf and give it to the ethernet header
@@ -214,7 +215,7 @@ int main()
     /** IF we have an incoming ICMP echo request/reply **/
     if (ntohs(e_h.ether_type) == 0x800)
     {
-      //sleep(2);
+      // sleep(2);
       printf("********************Received ICMP Request********************\n");
       /*[Eth header][IP header][ICMP header]*/
       printf("Ethernet Header\n");
@@ -228,27 +229,26 @@ int main()
       printf("Type of service: %d\n", ip_h.tos);
       printf("Total Length: %d\n", ntohs(ip_h.tot_len));
       printf("Identification: %d\n", ip_h.id);
-      printf("Fragment Offset: %d\n", ip_h.frag_off&256);
+      printf("Fragment Offset: %d\n", ip_h.frag_off & 256);
       printf("Time To Live: %d\n", ip_h.ttl);
-      printf("Protocol: %d\n", ip_h.protocol);         // Potentially needs to be converted to little endian
-      printf("Header Checksum: %d\n", ip_h.check);     // Will possible change
-      
+      printf("Protocol: %d\n", ip_h.protocol);     // Potentially needs to be converted to little endian
+      printf("Header Checksum: %d\n", ip_h.check); // Will possible change
+
       printf("Source Address: %s\n", inet_ntoa(*(struct in_addr *)&ip_h.saddr));      // Will possible change
       printf("Destination Address: %s\n", inet_ntoa(*(struct in_addr *)&ip_h.daddr)); // Will possible change
-
-      printf("------------ICMP Header------------\n");
-      printf("Type of service: %d\n", icmp_h.type); /* message type */
-      printf("Code: %d\n", icmp_h.code);            /* type sub-code */
-      printf("Check sum: %d\n", icmp_h.checksum);
-      printf("Id: %d\n", ntohs(icmp_h.un.echo.id));
-      printf("Sequence: %d\n", icmp_h.un.echo.sequence);
 
       // IP header -> If the ip_h.protocol == 1 this means we have an ICMP request/reply
       if (ip_h.protocol == 1)
       {
-        
+
         // Offset the buffer data by the size of the ethernet and ip headers
         memcpy(&icmp_h, &buf[sizeof(e_h) + sizeof(ip_h)], sizeof(icmp_h));
+        printf("------------ICMP Header------------\n");
+        printf("Type of service: %d\n", icmp_h.type); /* message type */
+        printf("Code: %d\n", icmp_h.code);            /* type sub-code */
+        printf("Check sum: %d\n", icmp_h.checksum);
+        printf("Id: %d\n", ntohs(icmp_h.un.echo.id));
+        printf("Sequence: %d\n", icmp_h.un.echo.sequence);
 
         /** IF we have an incoming ICMP echo request/reply **/
         if (icmp_h.type == 0)
@@ -264,8 +264,6 @@ int main()
           // use a temp variable to protect the data
           memcpy(&temp_ether_dhost, &e_h.ether_dhost, sizeof(temp_ether_dhost));
           memcpy(&temp_ether_shost, &e_h.ether_shost, sizeof(temp_ether_dhost));
-          
-
 
           // Grabs the hosts mac address from chMAC and stores it into e_h.ether_shost for the Ethernet Header
           memcpy(&e_h.ether_shost, &chMAC, sizeof(e_h.ether_shost)); // Replaces all zeros with the mac
@@ -282,23 +280,40 @@ int main()
           //  use a temp variable to protect the data
           memcpy(&temp_src_ip, &ip_h.saddr, sizeof(temp_src_ip)); // use a temp variable to protect the data
           memcpy(&temp_dst_ip, &ip_h.daddr, sizeof(temp_dst_ip)); // use a temp variable to protect the data
-          
-          
+
           // IP for source and destination swapped
           memcpy(&ip_h.saddr, &temp_dst_ip, sizeof(temp_dst_ip)); // Take the ip of the source from the arp header and replace it with the destination ip
           memcpy(&ip_h.daddr, &temp_src_ip, sizeof(temp_src_ip)); // Take the ip of the destination from the arp header and replace it with the source ip
 
-        
           // Protocol of 1 means we are working with ICMP
           ip_h.protocol = 1;
 
           // Properly call checksum and then directly set the new checksum value using memcpy
-          memcpy(&icmp_h.checksum,cksum(&icmp_h,sizeof(icmp_h)),sizeof(icmp_h.checksum));
-          //u_int32_t tst = cksum(buf,sizeof(buf));
-          // Header checksum
-          //sleep(2);
-          printf("********************Sent ICMP Reply********************\n");
+          // memcpy(&icmp_h.checksum,cksum(&icmp_h,sizeof(icmp_h)),sizeof(icmp_h.checksum));
+          icmp_h.checksum = 0;
           icmp_h.type = 0;
+
+          // icmp_h.checksum = cksum(&icmp_h,64);
+          // icmp_h.checksum = cksum(&buf,sizeof(receive_len));
+          // icmp_h.checksum = ntohs(cksum(&buf,sizeof(receive_len)));
+          // icmp_h.checksum = cksum(&icmp_h,sizeof(icmp_h)+(receive_len - (sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h))));
+          //icmp_h.checksum = cksum(&icmp_h, sizeof(icmp_h) + (receive_len - (sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h))));
+
+          memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
+          memcpy(&buf[sizeof(e_h)], &ip_h, sizeof(ip_h));
+          memcpy(&buf[sizeof(e_h) + sizeof(ip_h)], &icmp_h, sizeof(icmp_h));
+
+          icmp_h.checksum = cksum(&buf[sizeof(e_h) + sizeof(ip_h)], sizeof(icmp_h) + (receive_len - (sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h))));
+
+          memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
+          memcpy(&buf[sizeof(e_h)], &ip_h, sizeof(ip_h));
+          memcpy(&buf[sizeof(e_h) + sizeof(ip_h)], &icmp_h, sizeof(icmp_h));
+
+          // u_int32_t tst = cksum(buf,sizeof(buf));
+          //  Header checksum
+          // sleep(2);
+          printf("********************Sent ICMP Reply********************\n");
+          
           printf("------------Ethernet Header------------\n");
           printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
           printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
@@ -308,10 +323,10 @@ int main()
           printf("Type of service: %d\n", ip_h.tos);
           printf("Total Length: %d\n", ntohs(ip_h.tot_len));
           printf("Identification: %d\n", ip_h.id);
-          printf("Fragment Offset: %d\n", (ip_h.frag_off)&256);
+          printf("Fragment Offset: %d\n", (ip_h.frag_off) & 256);
           printf("Time To Live: %d\n", ip_h.ttl);
-          printf("Protocol: %d\n", ip_h.protocol);         // Potentially needs to be converted to little endian
-          printf("Header Checksum: %d\n", ip_h.check);     // Will possible change
+          printf("Protocol: %d\n", ip_h.protocol);                                        // Potentially needs to be converted to little endian
+          printf("Header Checksum: %d\n", ip_h.check);                                    // Will possible change
           printf("Source Address: %s\n", inet_ntoa(*(struct in_addr *)&ip_h.saddr));      // Will possible change
           printf("Destination Address: %s\n", inet_ntoa(*(struct in_addr *)&ip_h.daddr)); // Will possible change
 
@@ -322,20 +337,16 @@ int main()
           printf("Id: %d\n", ntohs(icmp_h.un.echo.id));
           printf("Sequence: %d\n", icmp_h.un.echo.sequence);
 
+          // char data[1500];
+          //  Grab the 1500 bytes that are after the ICMP header and store it in data
+          // memcpy(&data, &buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)], sizeof(data));
+          //  Setting the new Ethernet header and ARP header
 
 
-          //char data[1500];
-          // Grab the 1500 bytes that are after the ICMP header and store it in data
-          //memcpy(&data, &buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)], sizeof(data));
-          // Setting the new Ethernet header and ARP header
-          memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
-          memcpy(&buf[sizeof(e_h)], &ip_h, sizeof(ip_h));
-          memcpy(&buf[sizeof(e_h) + sizeof(ip_h)], &icmp_h, sizeof(icmp_h));
-
-          //memcpy(&buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)], &data, sizeof(data));
+          // memcpy(&buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)], &data, sizeof(data));
 
           // Send the num data on via the socket
-          int n = sendto(packet_socket, buf, sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h) + (receive_len - (sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h))), 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
+          int n = sendto(packet_socket, buf, sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h) + (receive_len - (sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h))), 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
           printf("SENT ICMP %d\n", i++);
         }
       }
@@ -354,28 +365,27 @@ int main()
       // Parse the the buffer after the Ethernet Header and place the data into the full_arp_h structure
       memcpy(&full_arp_h, &buf[sizeof(e_h)], sizeof(full_arp_h)); // Store byte 14 - 41 in the full arp struct
 
-      //if (ntoh(full_arp_h.ea_hdr.ar_op) == 1)
+      // if (ntoh(full_arp_h.ea_hdr.ar_op) == 1)
       if (ntohs(full_arp_h.ea_hdr.ar_op) == 1)
       {
-        //sleep(2);
+        // sleep(2);
         printf("********************Received the ARP Request********************\n");
         printf("------------Ethernet Header------------\n");
         printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
         printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
         printf("Type: 0x%03x\n", ntohs(e_h.ether_type));
 
-        
         printf("------------Full ARP Header------------\n");
         printf("Hardware Type: %d\n", full_arp_h.ea_hdr.ar_hrd);                                       // unsigned short
-        printf("Protocol Type: %d\n", ntohs(full_arp_h.ea_hdr.ar_pro));                           // unsigned short
+        printf("Protocol Type: %d\n", ntohs(full_arp_h.ea_hdr.ar_pro));                                // unsigned short
         printf("Hardware Address Length: %d\n", full_arp_h.ea_hdr.ar_hln);                             // unsigned char
         printf("Protocol Address Length: %d\n", full_arp_h.ea_hdr.ar_pln);                             // unsigned char
         printf("Sender Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha)); // u_int8_t
-        printf("Sender Protocol Address: %s\n",inet_ntoa(*(struct in_addr *)&full_arp_h.arp_spa)); // u_int8_t
+        printf("Sender Protocol Address: %s\n", inet_ntoa(*(struct in_addr *)&full_arp_h.arp_spa));    // u_int8_t
         printf("Target Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha)); // u_int8_t
-        printf("Target Protocol Address: %s\n", inet_ntoa(*(struct in_addr *)&full_arp_h.arp_tpa)); // u_int8_t
-        memcpy(&full_arp_h.arp_sha, &e_h.ether_shost, sizeof(full_arp_h.arp_sha)); /* sender hardware address */
-        memcpy(&full_arp_h.arp_tha, &e_h.ether_dhost, sizeof(full_arp_h.arp_tha)); /* target hardware address */
+        printf("Target Protocol Address: %s\n", inet_ntoa(*(struct in_addr *)&full_arp_h.arp_tpa));    // u_int8_t
+        memcpy(&full_arp_h.arp_sha, &e_h.ether_shost, sizeof(full_arp_h.arp_sha));                     /* sender hardware address */
+        memcpy(&full_arp_h.arp_tha, &e_h.ether_dhost, sizeof(full_arp_h.arp_tha));                     /* target hardware address */
 
         /**** Update the new Ethernet Header ****/
 
@@ -420,8 +430,8 @@ int main()
         memcpy(&full_arp_h.arp_sha, &chMAC, sizeof(chMAC));
         memcpy(&full_arp_h.arp_tha, &temp_ether_shost, sizeof(chMAC));
 
-        //sleep(2);
-        // Hardware type for source and dest plus protocol for source and dest do not need to be changed.
+        // sleep(2);
+        //  Hardware type for source and dest plus protocol for source and dest do not need to be changed.
         printf("\n********************Sending the ARP reply********************\n");
         printf("------------Ethernet Header------------\n");
         printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
@@ -434,12 +444,11 @@ int main()
         printf("Hardware Address Length: %c\n", full_arp_h.ea_hdr.ar_hln);                             // unsigned char
         printf("Protocol Address Length: %c\n", full_arp_h.ea_hdr.ar_pln);                             // unsigned char
         printf("Sender Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_sha)); // u_int8_t
-        printf("Sender Protocol Address: %s\n",inet_ntoa(*(struct in_addr *)&full_arp_h.arp_spa)); // u_int8_t
+        printf("Sender Protocol Address: %s\n", inet_ntoa(*(struct in_addr *)&full_arp_h.arp_spa));    // u_int8_t
         printf("Target Hardware Address: %s\n", ether_ntoa((struct ether_addr *)&full_arp_h.arp_tha)); // u_int8_t
-        printf("Target Protocol Address: %s\n", inet_ntoa(*(struct in_addr *)&full_arp_h.arp_tpa)); // u_int8_t
+        printf("Target Protocol Address: %s\n", inet_ntoa(*(struct in_addr *)&full_arp_h.arp_tpa));    // u_int8_t
 
-
-        //printf("Got a %d byte packet\n", n);
+        // printf("Got a %d byte packet\n", n);
         printf("IP Protocol: %d\n", ntohs(full_arp_h.ea_hdr.ar_op));
 
         // Setting the new Ethernet header and ARP header
