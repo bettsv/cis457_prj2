@@ -39,23 +39,6 @@ u_int8_t temp_dst_ip[4];
 int i = 1;
 int j = 1;
 
-// u_int16_t cksum(void *buf, int count)
-// {
-//     register u_int32_t sum = 0;
-
-//     while (count--)
-//     {
-//         sum += *buf++;
-//         if (sum & 0xFFFF0000)
-//         {
-//             /* carry occurred, so wrap around */
-//             sum &= 0xFFFF;
-//             sum++;
-//         }
-//     }
-//     return ~(sum & 0xFFFF);
-// }
-
 // Calculating the Check Sum
 u_int16_t cksum(void *b, int len)
 {
@@ -201,12 +184,7 @@ int main()
     struct ether_header e_h;
     struct iphdr ip_h;
     struct icmphdr icmp_h;
-    // char data[1500];
 
-    // memcpy(&data,&buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)],sizeof(data));
-    // printf("data len :[%lu]\n",n - (sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)));
-
-    // printf("The size of eh is [%lu] bytes.\n",sizeof(eh));
     //  Copy the first 14 bytes from the buf and give it to the ethernet header
     memcpy(&e_h, buf, sizeof(e_h));
 
@@ -271,9 +249,6 @@ int main()
           // Updating the ethernet header
           // memcpy(&e_h.ether_shost,&temp_ether_dhost,sizeof(temp_ether_dhost));
           memcpy(&e_h.ether_dhost, &temp_ether_shost, sizeof(temp_ether_dhost));
-          // Type does not net to be changed, must be 0x806 for ARP
-
-          // Type does not net to be changed, must be 0x800 for ICMP
 
           /**** Update new IP Header  ****/
           // ip addresses
@@ -292,12 +267,6 @@ int main()
           // memcpy(&icmp_h.checksum,cksum(&icmp_h,sizeof(icmp_h)),sizeof(icmp_h.checksum));
           icmp_h.checksum = 0;
           icmp_h.type = 0;
-
-          // icmp_h.checksum = cksum(&icmp_h,64);
-          // icmp_h.checksum = cksum(&buf,sizeof(receive_len));
-          // icmp_h.checksum = ntohs(cksum(&buf,sizeof(receive_len)));
-          // icmp_h.checksum = cksum(&icmp_h,sizeof(icmp_h)+(receive_len - (sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h))));
-          //icmp_h.checksum = cksum(&icmp_h, sizeof(icmp_h) + (receive_len - (sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h))));
 
           memcpy(&buf, &e_h, sizeof(e_h)); // Store byte 14 - 41 in the full arp struct
           memcpy(&buf[sizeof(e_h)], &ip_h, sizeof(ip_h));
@@ -336,14 +305,6 @@ int main()
           printf("Check sum: %d\n", icmp_h.checksum);
           printf("Id: %d\n", ntohs(icmp_h.un.echo.id));
           printf("Sequence: %d\n", icmp_h.un.echo.sequence);
-
-          // char data[1500];
-          //  Grab the 1500 bytes that are after the ICMP header and store it in data
-          // memcpy(&data, &buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)], sizeof(data));
-          //  Setting the new Ethernet header and ARP header
-
-
-          // memcpy(&buf[sizeof(e_h) + sizeof(ip_h)+ sizeof(icmp_h)], &data, sizeof(data));
 
           // Send the num data on via the socket
           int n = sendto(packet_socket, buf, sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h) + (receive_len - (sizeof(e_h) + sizeof(ip_h) + sizeof(icmp_h))), 0, (struct sockaddr *)&recvaddr, sizeof(recvaddr));
@@ -409,20 +370,6 @@ int main()
         // IP for source and destination swapped
         memcpy(&full_arp_h.arp_spa, &temp_dst_ip, sizeof(temp_dst_ip)); // Take the ip of the source from the arp header and replace it with the destination ip
         memcpy(&full_arp_h.arp_tpa, &temp_src_ip, sizeof(temp_src_ip)); // Take the ip of the destination from the arp header and replace it with the source ip
-
-        /* fix me Update new IP within full_arp_h mac addresses */
-
-        // Grabs the hosts mac address from chMAC and stores it into e_h.ether_shost for the IP Header
-        // memcpy(&temp_ip_dhost, &chMAC, sizeof(temp_ip_dhost));
-
-        // // use a temp variable to protect the data
-        // memcpy(&temp_ip_shost,&full_arp_h.arp_sha,sizeof(temp_ip_dhost));        /* source ether addr        */
-        // memcpy(&temp_ip_dhost,&full_arp_h.arp_tha, sizeof(temp_ip_dhost));        /* destination eth addr        */
-
-        // // MAC for source and destination swapped
-        // memcpy(&full_arp_h.arp_tha,&temp_ether_shost,sizeof(temp_ip_shost));        /* source ether addr        */
-        // //memcpy(&full_arp_h.arp_sha,&temp_ip_dhost,sizeof(temp_ip_dhost));        /* destination eth addr        */
-        // memcpy(&full_arp_h.arp_sha, &chMAC, sizeof(full_arp_h.arp_sha)); //Replaces all zeros with the mac
 
         // The opcode was updated to be 2 in big endian format
         full_arp_h.ea_hdr.ar_op = ntohs(2);
