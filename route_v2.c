@@ -56,6 +56,19 @@ u_int16_t cksum(void *b, int len)
   return result;
 }
 
+bool vercksum(void *b, int len)
+{
+  unsigned short *buf = b;
+  unsigned int sum = 0;
+  for (sum = 0; len > 1; len -= 2)
+    sum += *buf++;
+  if (sum != 0xFFFF)
+  {
+    return false;
+  }
+  return true;
+}
+
 int main()
 {
   /** Beginning of cited code **/
@@ -282,7 +295,7 @@ int main()
           //  Header checksum
           // sleep(2);
           printf("********************Sent ICMP Reply********************\n");
-          
+
           printf("------------Ethernet Header------------\n");
           printf("Destination: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_dhost));
           printf("Source: %s\n", ether_ntoa((struct ether_addr *)&e_h.ether_shost));
