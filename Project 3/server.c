@@ -41,44 +41,17 @@ int main(int argc, char **argv)
       if (FD_ISSET(i, &tmpset) && i != sockfd)
       {
         char line[5000];
-        int n = recv(i, line, 5000, 0);
-        printf("Got from client: %s", line);
-        line[strlen(line) - 1] = '\0';
+        char test[5000] = "adios";
+        recv(i, line, 5000, 0);
+        printf("Got from client #%d: %s\n", i, line);
+        send(i, test, strlen(line) + 1, 0);
 
-        // READ FILE
-        char *fname = line;
-        FILE *fp = fopen(fname, "rb");
-        if (fp == NULL)
-        {
-          printf("Error in reading file.");
-          return (0);
-        }
 
-        // SEND FILE
-        char data[1025] = {0};
-        while (1)
-        {
-          data[0] = 0;
-          n = fread(&data[1], 1024, 1, fp);
-          if (n == 0)
-          {
-            break;
-          }
-
-          if (send(i, data, sizeof(data), 0) == -1)
-          {
-            printf("Error in sending file.");
-            return (0);
-          }
-          bzero(data, 1025);
-        }
-        data[0] = 1;
-        if (send(i, data, sizeof(data), 0) == -1)
+        if (send(i, line, sizeof(line), 0) == -1)
         {
           printf("Error in sending file.");
           return (0);
         }
-        printf("File Transfer done.\n");
         FD_CLR(i, &sockets);
         close(i);
       }

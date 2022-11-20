@@ -6,14 +6,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-char *get_filename_ext(const char *filename)
-{
-  char *dot = strrchr(filename, '.');
-  if (!dot || dot == filename)
-    return "";
-  return dot;
-}
-
 int main(int argc, char **argv)
 {
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -37,53 +29,12 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  printf("Enter filename: ");
+  printf("Enter a message: ");
   char line[5000];
   fgets(line, 5000, stdin);
   send(sockfd, line, strlen(line) + 1, 0);
-
-  // create new file
-  char *ext = get_filename_ext(line);
-  char *output = "output";
-  char *fname;
-  fname = malloc(strlen(output) + 4 + 1);
-  strcpy(fname, output);
-  strcat(fname, ext);
-  fname[strlen(fname) - 1] = '\0';
-
-  // WRITE FILE
-  char buffer[1025];
-  FILE *fp = fopen(fname, "wb");
-
-  char errfile[5000] = "File not found.";
-  int packet_count = 1;
-  while (1)
-  {
-    recv(sockfd, buffer, 1025, 0);
-
-    if (strcmp(buffer, "file not found") == 0)
-    {
-      printf("File doesn't exists.");
-      break;
-    }
-    if (buffer[0] == 1)
-    {
-      break;
-    }
-    packet_count++;
-    fwrite(&buffer[1], 1024, 1, fp);
-    bzero(buffer, 1025);
-  }
-  int count = 0;
-  for (int i = 0; i < 1024; i++)
-  {
-    if (buffer[i] == 0)
-    {
-      break;
-    }
-    count++;
-  }
-  fwrite(&buffer[1], count - 1, 1, fp);
+  recv(sockfd, line, 5000, 0);
+  printf("Got from server: %s", line);
 
   close(sockfd);
   return 0;
