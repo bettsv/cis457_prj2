@@ -9,13 +9,17 @@
 int main(int argc, char **argv)
 {
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-  printf("Enter an IP Address: ");
-  char ip[5000];
-  scanf("%s", ip);
-  printf("Enter a port: ");
+  char *ip;
   short port;
-  scanf("%hd%*c", &port);
+
+  if( argc == 3 ) {
+    ip = argv[1];
+    port = atoi(argv[2]);
+   }
+   else {
+    printf("usage: ./client  <ip> <port>\n");
+    return 0;
+   }
 
   struct sockaddr_in serveraddr;
   serveraddr.sin_family = AF_INET;
@@ -33,8 +37,6 @@ int main(int argc, char **argv)
   char line[5000];
   fgets(line, 5000, stdin);
   send(sockfd, line, strlen(line) + 1, 0);
-  recv(sockfd, line, 5000, 0);
-  printf("Got from server: %s", line);
 
   close(sockfd);
   return 0;

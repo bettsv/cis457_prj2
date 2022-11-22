@@ -7,9 +7,9 @@ $ make
 then run the client and server in diferent terminal windows:
 
 ```
-./client
+./client <ip> <port>
 ```
 
 ```
-./server
+./server <port>
 ```

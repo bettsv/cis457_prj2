@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+
 
 int main(int argc, char **argv)
 {
@@ -13,9 +15,16 @@ int main(int argc, char **argv)
   FD_ZERO(&sockets);
   FD_SET(sockfd, &sockets);
 
-  printf("Enter a port: ");
   short port;
-  scanf("%hd%*c", &port);
+
+  if( argc == 2 ) {
+    port = atoi(argv[1]);
+   }
+   else {
+    printf("usage: ./client <port>\n");
+    return 0;
+   }
+
 
   struct sockaddr_in serveraddr, clientaddr;
   serveraddr.sin_family = AF_INET;
@@ -44,7 +53,6 @@ int main(int argc, char **argv)
         char test[5000] = "adios";
         recv(i, line, 5000, 0);
         printf("Got from client #%d: %s\n", i, line);
-        send(i, test, strlen(line) + 1, 0);
 
 
         if (send(i, line, sizeof(line), 0) == -1)
