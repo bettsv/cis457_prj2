@@ -1,5 +1,0 @@
-https://github.com/ElectronSz/Encrypted-Chat-Server-Using-C-Programming-and-OpenSSL-AES-DES
-https://stackoverflow.com/questions/40812836/how-to-create-chat-server-using-openssl-in-c
-https://aticleworld.com/ssl-server-client-using-openssl-in-c/
-https://osandnetworkingcslab.wordpress.com/client-server-chat-using-tcp/
-https://www.thiyagaraaj.com/tutorials/unix-network-programming-example-programs/tcp-chat-programming-in-unix-using-c-programmin
